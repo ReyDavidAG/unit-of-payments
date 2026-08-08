@@ -184,24 +184,6 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: inputRadius),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: primary.withValues(alpha: 0.18),
-        // Selected icon and label both read primary so the active tab
-        // sits in the same chromatic identity as buttons and inputs.
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: primary, size: 24);
-          }
-          return IconThemeData(color: muted, size: 24);
-        }),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          final base = text.labelSmall ?? const TextStyle();
-          if (states.contains(WidgetState.selected)) {
-            return base.copyWith(color: primary, fontWeight: FontWeight.w500);
-          }
-          return base.copyWith(color: muted);
-        }),
-      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ink,
         contentTextStyle: text.bodyLarge?.copyWith(color: paper),

@@ -5,6 +5,7 @@ import '../../../config/theme/app_motion.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/providers/shell_index_provider.dart';
 import '../../../data/services/notifications/local_notification_service.dart';
+import '../../widgets/common/colored_nav_bar.dart';
 import '../cards/cards_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../notifications/notification_history_screen.dart';
@@ -89,28 +90,28 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
           NotificationHistoryScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: _onTabTapped,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.pie_chart_outline),
-            selectedIcon: Icon(Icons.pie_chart),
+      bottomNavigationBar: ColoredNavBar(
+        currentIndex: currentIndex,
+        onTap: _onTabTapped,
+        items: const [
+          NavBarItem(
+            icon: Icons.pie_chart_outline,
+            selectedIcon: Icons.pie_chart,
             label: 'Resumen',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
+          NavBarItem(
+            icon: Icons.receipt_long_outlined,
+            selectedIcon: Icons.receipt_long,
             label: 'Suscripciones',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.credit_card_outlined),
-            selectedIcon: Icon(Icons.credit_card),
+          NavBarItem(
+            icon: Icons.credit_card_outlined,
+            selectedIcon: Icons.credit_card,
             label: 'Tarjetas',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_none),
-            selectedIcon: Icon(Icons.notifications),
+          NavBarItem(
+            icon: Icons.notifications_none,
+            selectedIcon: Icons.notifications,
             label: 'Avisos',
           ),
         ],

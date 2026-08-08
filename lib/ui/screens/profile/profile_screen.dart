@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/theme_mode_enum.dart';
 import '../../../data/models/profile/profile_model.dart';
@@ -66,15 +67,33 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sectionGap),
           const _ThemeSelector(),
           const SizedBox(height: AppSpacing.sectionGap),
+          // Each button in the profile carries a semantic colour:
+          //   info      → neutral, preference-style (theme selector tint)
+          //   warning   → pay attention (changing a credential)
+          //   critical  → act now / destructive (signing out)
+          // The label colour alone was too quiet before; the colours now
+          // signal what kind of action each button represents.
           OutlinedButton(
             onPressed: () => ChangePasswordView.show(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.brightness == Brightness.dark
+                  ? AppColors.warningDark
+                  : AppColors.warning,
+              side: BorderSide(
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.warningDark
+                    : AppColors.warning,
+              ),
+            ),
             child: const Text('Cambiar contraseña'),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextButton(
             onPressed: SupabaseService.signOut,
             style: TextButton.styleFrom(
-              foregroundColor: theme.colorScheme.error,
+              foregroundColor: theme.brightness == Brightness.dark
+                  ? AppColors.criticalDark
+                  : AppColors.critical,
             ),
             child: const Text('Cerrar sesión'),
           ),
@@ -124,7 +143,9 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 /// Theme is device-local, so it sits apart from the profile settings that
-/// travel with the account.
+/// travel with the account. The small info-coloured dot on the label
+/// signals 'preference / state' rather than 'action' — info from the
+/// semantic palette, not the terracotta accent or teal primary.
 class _ThemeSelector extends ConsumerWidget {
   const _ThemeSelector();
 
@@ -133,11 +154,26 @@ class _ThemeSelector extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final AppThemeMode current =
         ref.watch(themeProvider).value ?? AppThemeMode.system;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color dotColor = isDark ? AppColors.infoDark : AppColors.info;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('TEMA', style: theme.textTheme.labelSmall),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text('TEMA', style: theme.textTheme.labelSmall),
+          ],
+        ),
         const SizedBox(height: AppSpacing.sm),
         SegmentedButton<AppThemeMode>(
           segments: [
