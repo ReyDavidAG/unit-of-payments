@@ -8,7 +8,8 @@ Two companion documents, equally binding: [DESIGN.md](DESIGN.md) for how it look
 
 ## Project
 
-`unit_of_payments` — Flutter app that notifies you of upcoming payments and shows all your
+`unit_of_payments` — Flutter app (**Vence** is the display name on iOS and Android home
+screens) that notifies you of upcoming payments and shows all your
 subscriptions in one place. Platforms: **iOS and Android only**. Org: `com.davidag`.
 
 Work is done **feature by feature**, one branch per feature (`feature/<name>`).
@@ -98,7 +99,7 @@ Two languages, and the split is strict.
 
 **Everything the user reads is in Spanish (es-MX, tuteo).** Labels, buttons, titles, hints,
 validation messages, error messages, snackbars, tooltips, empty states, notification text.
-No English leaks into the UI. Exceptions: the product name `Unit of Payments`, and developer
+No English leaks into the UI. Exceptions: the product name `Vence`, and developer
 errors that only ever reach a log or a debug console.
 
 **Everything a developer reads is in English.**
