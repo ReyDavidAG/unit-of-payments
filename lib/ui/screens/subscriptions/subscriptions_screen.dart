@@ -103,10 +103,9 @@ class SubscriptionsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.listGap),
           itemBuilder: (_, _) => const SubscriptionTileSkeleton(),
         ),
-        error: (error, _) => EmptyStateWidget(
-          message: SupabaseService.describeError(error),
-          actionLabel: 'Reintentar',
-          onAction: () => ref.invalidate(subscriptionsProvider),
+        error: (error, _) => ErrorRetryWidget(
+          error: error,
+          onRetry: () => ref.invalidate(subscriptionsProvider),
         ),
         data: (items) => items.isEmpty
             ? EmptyStateWidget(

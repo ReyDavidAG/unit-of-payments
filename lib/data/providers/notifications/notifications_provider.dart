@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/notifications/notification_log_model.dart';
@@ -41,8 +42,16 @@ class NotificationLogNotifier
     if (ref.watch(currentUserIdProvider) == null) {
       return const [];
     }
-    // Depends on the sync so the history reflects what was just scheduled.
-    await ref.watch(notificationSyncProvider.future);
+    // Depends on the sync so the history reflects what was just scheduled, but
+    // does not depend on it succeeding: scheduling is a side effect, reading
+    // the log is the job of this screen. The watch stays outside the try so
+    // the dependency is still registered when it throws.
+    final Future<int> sync = ref.watch(notificationSyncProvider.future);
+    try {
+      await sync;
+    } on Object catch (error) {
+      debugPrint('notification sync failed, showing history anyway: $error');
+    }
     final List<NotificationLogModel> entries =
         await NotificationLogService.fetchRecent();
     return _settleDelivered(entries);
@@ -61,7 +70,14 @@ class NotificationLogNotifier
     if (due.isEmpty) {
       return entries;
     }
-    await NotificationLogService.markDelivered(due);
+    // Cosmetic bookkeeping. If it fails the entries are still correct, just
+    // one launch behind on their delivered flag.
+    try {
+      await NotificationLogService.markDelivered(due);
+    } on Object catch (error) {
+      debugPrint('could not mark notices delivered: $error');
+      return entries;
+    }
     return NotificationLogService.fetchRecent();
   }
 }

@@ -50,12 +50,19 @@ class DashboardScreen extends ConsumerWidget {
             ref
               ..invalidate(subscriptionsProvider)
               ..invalidate(cardTotalsProvider)
-              ..invalidate(upcomingProvider);
+              ..invalidate(upcomingProvider)
+              ..invalidate(cardStatementsProvider)
+              ..invalidate(debtorsProvider);
             await ref.read(cardTotalsProvider.future);
           },
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
-            children: [_Message(SupabaseService.describeError(error))],
+          child: ErrorRetryWidget(
+            error: error,
+            onRetry: () => ref
+              ..invalidate(subscriptionsProvider)
+              ..invalidate(cardTotalsProvider)
+              ..invalidate(upcomingProvider)
+              ..invalidate(cardStatementsProvider)
+              ..invalidate(debtorsProvider),
           ),
         ),
         data: (_) => RefreshIndicator(

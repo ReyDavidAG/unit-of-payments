@@ -111,10 +111,9 @@ class CardsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.listGap),
           itemBuilder: (_, _) => const CardTileSkeleton(),
         ),
-        error: (error, _) => EmptyStateWidget(
-          message: SupabaseService.describeError(error),
-          actionLabel: 'Reintentar',
-          onAction: () => ref.invalidate(cardsProvider),
+        error: (error, _) => ErrorRetryWidget(
+          error: error,
+          onRetry: () => ref.invalidate(cardsProvider),
         ),
         data: (items) => items.isEmpty
             ? EmptyStateWidget(

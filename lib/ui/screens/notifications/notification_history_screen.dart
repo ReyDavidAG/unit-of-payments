@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/notifications/notification_log_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
-import '../../../data/services/supabase/supabase_service.dart';
+import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
 import '../../widgets/common/theme_toggle_button.dart';
@@ -42,9 +42,9 @@ class NotificationHistoryScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.listGap),
             itemBuilder: (_, _) => const NotificationEntrySkeleton(),
           ),
-          AsyncError(:final error) => _Centered(
-            SupabaseService.describeError(error),
-            theme,
+          AsyncError(:final error) => ErrorRetryWidget(
+            error: error,
+            onRetry: () => ref.invalidate(notificationLogProvider),
           ),
           _ => _list(log.value ?? const [], theme),
         },
