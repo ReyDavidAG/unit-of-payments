@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/app_motion.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/services/notifications/local_notification_service.dart';
 
@@ -52,13 +53,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
     ref.watch(notificationSyncProvider);
 
     return Scaffold(
-      // GestureDetector on the body lets the user swipe horizontally between
-      // tabs without losing the indexedStack benefit of go_router — each
-      // branch stays mounted, scroll positions are preserved.
-      body: _SwipeNavigation(
-        shell: widget.navigationShell,
-        child: widget.navigationShell,
-      ),
+      body: _BranchSlider(shell: widget.navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: widget.navigationShell.currentIndex,
         // initialLocation returns to a tab's root when it is already selected.
@@ -93,25 +88,53 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
   }
 }
 
-/// Horizontal swipe between tabs. Threshold is velocity-based (not
-/// distance-based) so a quick flick always commits and a slow drag is
-/// ignored — the latter is reserved for horizontal scrollables inside
-/// each tab. Direction maps to next/previous tab; edges clamp.
-class _SwipeNavigation extends StatelessWidget {
-  const _SwipeNavigation({required this.shell, required this.child});
+/// Shell body wrapped in two motions: a horizontal-drag velocity trigger
+/// (flick left/right to switch tab) and an AnimatedSwitcher with a
+/// direction-aware slide. The Stack layoutBuilder keeps the outgoing and
+/// incoming tab on screen at the same time so the transition reads as
+/// one screen gluing into the next — the closest we can get to a
+/// PageView's drag-follows-finger without abandoning the StatefulShell
+/// model (each branch keeps its own Navigator and scroll position).
+class _BranchSlider extends StatefulWidget {
+  const _BranchSlider({required this.shell});
 
   final StatefulNavigationShell shell;
-  final Widget child;
 
   static const double _velocityThreshold = 350; // px/s
   static const int _lastBranch = 3; // four destinations: 0..3
 
+  @override
+  State<_BranchSlider> createState() => _BranchSliderState();
+}
+
+class _BranchSliderState extends State<_BranchSlider> {
+  int _previousIndex = 0;
+  bool _forward = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousIndex = widget.shell.currentIndex;
+  }
+
+  @override
+  void didUpdateWidget(covariant _BranchSlider old) {
+    super.didUpdateWidget(old);
+    final int current = widget.shell.currentIndex;
+    if (current != _previousIndex) {
+      setState(() {
+        _forward = current > _previousIndex;
+        _previousIndex = current;
+      });
+    }
+  }
+
   void _onSwipe(double velocity) {
-    final int current = shell.currentIndex;
-    if (velocity > _velocityThreshold) {
-      shell.goBranch((current - 1).clamp(0, _lastBranch));
-    } else if (velocity < -_velocityThreshold) {
-      shell.goBranch((current + 1).clamp(0, _lastBranch));
+    final int current = widget.shell.currentIndex;
+    if (velocity > _BranchSlider._velocityThreshold) {
+      widget.shell.goBranch((current - 1).clamp(0, _BranchSlider._lastBranch));
+    } else if (velocity < -_BranchSlider._velocityThreshold) {
+      widget.shell.goBranch((current + 1).clamp(0, _BranchSlider._lastBranch));
     }
   }
 
@@ -120,7 +143,62 @@ class _SwipeNavigation extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: (details) => _onSwipe(details.primaryVelocity ?? 0),
-      child: child,
+      child: _SlideDirection(
+        forward: _forward,
+        child: AnimatedSwitcher(
+          duration: AppMotion.long,
+          switchInCurve: AppMotion.easeOut,
+          switchOutCurve: AppMotion.easeIn,
+          // Stack keeps both the outgoing and incoming tab on screen so
+          // the outgoing can finish sliding out while the incoming slides
+          // in. Without this only one is visible and the transition reads
+          // as a hard cross.
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            alignment: Alignment.topLeft,
+            children: <Widget>[...previousChildren, ?currentChild],
+          ),
+          transitionBuilder: (child, animation) {
+            final bool forward = _SlideDirection.of(context);
+            final bool isExiting = animation.status == AnimationStatus.reverse;
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: isExiting
+                      ? Offset.zero
+                      : Offset(forward ? 0.3 : -0.3, 0),
+                  end: isExiting
+                      ? Offset(forward ? -0.3 : 0.3, 0)
+                      : Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: KeyedSubtree(
+            key: ValueKey(widget.shell.currentIndex),
+            child: widget.shell,
+          ),
+        ),
+      ),
     );
   }
+}
+
+/// Provides the current slide direction to the [AnimatedSwitcher]'s
+/// transitionBuilder, which otherwise has no way to know whether the new
+/// tab came from the left or the right of the previous one.
+class _SlideDirection extends InheritedWidget {
+  const _SlideDirection({required this.forward, required super.child});
+
+  final bool forward;
+
+  static bool of(BuildContext context) {
+    final _SlideDirection? scope = context
+        .dependOnInheritedWidgetOfExactType<_SlideDirection>();
+    return scope?.forward ?? true;
+  }
+
+  @override
+  bool updateShouldNotify(_SlideDirection old) => old.forward != forward;
 }
