@@ -49,6 +49,8 @@ Esto es lo primero porque el dominio toca tarjetas.
 ```sql
 create type public.billing_cycle as enum ('weekly', 'monthly', 'yearly', 'custom');
 create type public.card_brand   as enum ('visa', 'mastercard', 'amex', 'other');
+create type public.charge_kind  as enum ('subscription', 'installment');
+create type public.notice_kind  as enum ('charge', 'cutoff', 'payment_due');
 ```
 
 ### 3.2 `profiles`
@@ -74,7 +76,8 @@ create table public.cards (
   alias        text not null,                 -- "BBVA Oro", "Nómina Santander"
   brand        public.card_brand not null default 'other',
   last4        char(4),                       -- optional, display only
-  cutoff_day   smallint,                      -- statement cutoff day, optional
+  cutoff_day      smallint,                   -- statement cutoff day, optional
+  payment_due_day smallint,                   -- payment deadline, optional
   color        text not null default '#4A5568',
   archived     boolean not null default false,
   created_at   timestamptz not null default now(),
@@ -82,12 +85,18 @@ create table public.cards (
   constraint cards_alias_len  check (char_length(alias) between 1 and 40),
   constraint cards_last4_fmt  check (last4 is null or last4 ~ '^[0-9]{4}$'),
   constraint cards_cutoff_rng check (cutoff_day is null or cutoff_day between 1 and 31),
+  constraint cards_due_rng    check (payment_due_day is null or payment_due_day between 1 and 31),
   constraint cards_alias_uniq unique (user_id, alias)
 );
 ```
 
 `cards_last4_fmt` acepta 4 dígitos y **nada más**: la constraint es la que impide que alguien
 pegue un PAN completo en ese campo.
+
+**Son dos fechas distintas y las dos importan.** El *corte* cierra el estado de cuenta: lo que
+compres después cae en el siguiente. La *fecha límite de pago* es la que tiene consecuencia — si no
+pagas, hay intereses y se pierden los meses sin intereses. El aviso accionable es el del límite; el
+corte solo determina **cuáles** cargos entran en ese estado de cuenta.
 
 ### 3.4 `subscriptions`
 
@@ -101,11 +110,14 @@ create table public.subscriptions (
   cycle               public.billing_cycle not null default 'monthly',
   custom_days         smallint,
   first_charge_date   date not null,
-  ends_on             date,
+  ends_on             date,                    -- derived by trigger for installments
   reminder_days_before smallint not null default 1,
   category            text,
   active              boolean not null default true,
   notes               text,
+  kind                public.charge_kind not null default 'subscription',
+  installments_total  smallint,                -- 12 = "12 MSI"
+  owed_by             text,                    -- someone else repays this charge
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
 
@@ -116,7 +128,12 @@ create table public.subscriptions (
     (cycle = 'custom' and custom_days between 1 and 365) or
     (cycle <> 'custom' and custom_days is null)
   ),
-  constraint subs_ends_after  check (ends_on is null or ends_on >= first_charge_date)
+  constraint subs_ends_after  check (ends_on is null or ends_on >= first_charge_date),
+  constraint subs_installments check (
+    (kind = 'installment' and installments_total between 2 and 60 and cycle = 'monthly') or
+    (kind = 'subscription' and installments_total is null)
+  ),
+  constraint subs_owed_by_len check (owed_by is null or char_length(owed_by) between 1 and 40)
 );
 ```
 
@@ -125,6 +142,25 @@ create table public.subscriptions (
 `subs_custom_days` es la regla que impide el estado imposible "ciclo mensual con 45 días de período".
 Esa clase de validación vive acá, no en Dart.
 
+#### Los MSI viven en esta tabla, no en una propia
+
+Un plan a meses sin intereses **es** un cargo mensual a una tarjeta con fecha de fin. Reusando esta
+tabla, `next_charge_date`, los totales por tarjeta, las 14 políticas RLS y el programador de
+notificaciones siguen funcionando sin un solo cambio. Una tabla aparte duplicaría RLS y convertiría
+cada total en un `union` para siempre.
+
+`amount` sigue siendo **lo que se cobra cada mes**. La deuda total es `amount × installments_total`;
+no se guarda aparte porque dos columnas que dicen lo mismo terminan discrepando.
+
+**No hay columna de mensualidades pagadas.** El cargo es automático, así que "pagada" es "la fecha ya
+pasó" — se deriva con `installments_paid()`. Es la misma regla que ya rige a `next_charge_date`: un
+valor guardado se queda viejo solo, y un contador exigiría que el usuario palomee casillas.
+
+`owed_by` cubre el caso de prestar la tarjeta para que alguien pague a MSI, y también el Netflix
+compartido: aplica a los dos `kind`. Es texto y no una tabla de deudores porque agrupar por texto ya
+responde "cuánto me debe X", y una tabla compraría integridad referencial sobre un campo que teclea
+una sola persona.
+
 ### 3.5 `notification_log` — historial
 
 ```sql
@@ -132,23 +168,43 @@ create table public.notification_log (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null default auth.uid() references auth.users(id) on delete cascade,
   subscription_id uuid references public.subscriptions(id) on delete cascade,
+  card_id         uuid,                        -- cutoff / payment_due notices
+  kind            public.notice_kind not null default 'charge',
   charge_date     date not null,
   scheduled_for   timestamptz not null,
   delivered_at    timestamptz,
   opened_at       timestamptz,
+  acknowledged_at timestamptz,                 -- "enterado"
   amount          numeric(12,2) not null,
   title           text not null,
   created_at      timestamptz not null default now(),
 
-  constraint notif_once unique (subscription_id, charge_date)
+  constraint notif_target_xor check ((subscription_id is not null) <> (card_id is not null)),
+  constraint notif_card_fk foreign key (card_id, user_id)
+    references public.cards (id, user_id) on delete cascade
 );
+
+create unique index notif_once_sub  on public.notification_log (subscription_id, charge_date);
+create unique index notif_once_card on public.notification_log (card_id, charge_date, kind);
 ```
 
-`notif_once` es lo que hace el registro **idempotente**: el cliente reprograma notificaciones en cada
-arranque y la constraint evita duplicados sin que el cliente lleve la cuenta. `on conflict do nothing`.
+Los índices únicos son lo que hace el registro **idempotente**: el cliente reprograma notificaciones
+en cada arranque y evitan duplicados sin que lleve la cuenta. `on conflict do nothing`. Reemplazaron a
+`notif_once`, que asumía que todo aviso tenía suscripción.
+
+**No llevan `where`, y eso no es un descuido.** `ON CONFLICT` solo puede inferir un índice único
+**no parcial**, así que un predicado aquí rompe el upsert del programador con `42P10`. La garantía es
+la misma sin él: los nulos son distintos entre sí en un índice único, de modo que un aviso de tarjeta
+(`subscription_id` nulo) nunca choca en la llave de suscripción, ni al revés. `smoke.sql` reproduce
+ese upsert exacto para que la regresión no vuelva.
 
 Como las notificaciones locales disparan con la app cerrada, `delivered_at` se marca cuando el
 cliente arranca y ve que la fecha ya pasó, y `opened_at` cuando el usuario toca la notificación.
+
+**`acknowledged_at` es timestamp, no booleano.** Contesta lo mismo con `is not null` y además dice
+*cuándo* — que es el dato que sirve para saber si te enteraste antes o después de la fecha límite.
+Un bool tira esa información sin ahorrar nada. No es lo mismo que `opened_at`: abrir es haber visto,
+`acknowledged_at` es haberse hecho cargo.
 
 ---
 
