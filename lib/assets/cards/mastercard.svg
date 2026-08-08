@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Mastercard card mark">
+  <title>Mastercard</title>
+  <!-- Card body: ink-dark so the two signature circles pop. -->
+  <rect width="640" height="400" rx="28" fill="#1C1411"/>
+
+  <!-- Chip: gold-toned, upper-left, standard inset. -->
+  <g transform="translate(48, 60)">
+    <rect width="64" height="50" rx="6" fill="#C9A24B"/>
+    <line x1="0" y1="14" x2="64" y2="14" stroke="#1C1411" stroke-width="1.5"/>
+    <line x1="0" y1="36" x2="64" y2="36" stroke="#1C1411" stroke-width="1.5"/>
+    <line x1="32" y1="0" x2="32" y2="50" stroke="#1C1411" stroke-width="1.5"/>
+  </g>
+
+  <!-- Two interlocking circles, centered. Red on the left, amber on the right.
+       The overlap lens sits at the centre: small arc on each circle, the
+       brand spec colours it as a deeper amber/orange. -->
+  <g transform="translate(320, 200)">
+    <circle cx="-50" cy="0" r="74" fill="#EB001B"/>
+    <circle cx="50" cy="0" r="74" fill="#F79E1B"/>
+    <!-- Overlap lens: bounded by the two arcs that cross at y = ±sqrt(74²-50²). -->
+    <path d="M 0 -54.5 A 74 74 0 0 1 0 54.5 A 74 74 0 0 1 0 -54.5 Z" fill="#FF5F00"/>
+  </g>
+
+  <!-- "mastercard" wordmark beneath the mark, light to read against ink. -->
+  <g transform="translate(244, 322)">
+    <text font-family="Helvetica, Arial, sans-serif" font-weight="500" font-size="34" fill="#F5F0E8" letter-spacing="-1">mastercard</text>
+  </g>
+</svg>
