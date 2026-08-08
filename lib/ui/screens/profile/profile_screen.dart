@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/theme_mode_enum.dart';
 import '../../../data/models/profile/profile_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/providers/profile/profile_provider.dart';
+import '../../../data/providers/theme/theme_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/profile/change_password_view.dart';
 
@@ -62,6 +64,8 @@ class ProfileScreen extends ConsumerWidget {
             ],
           },
           const SizedBox(height: AppSpacing.sectionGap),
+          const _ThemeSelector(),
+          const SizedBox(height: AppSpacing.sectionGap),
           OutlinedButton(
             onPressed: () => ChangePasswordView.show(context),
             child: const Text('Cambiar contraseña'),
@@ -117,4 +121,37 @@ class ProfileScreen extends ConsumerWidget {
           : _update(context, ref, profile.copyWith(timezone: id)),
     ),
   ];
+}
+
+/// Theme is device-local, so it sits apart from the profile settings that
+/// travel with the account.
+class _ThemeSelector extends ConsumerWidget {
+  const _ThemeSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final AppThemeMode current =
+        ref.watch(themeProvider).value ?? AppThemeMode.system;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('TEMA', style: theme.textTheme.labelSmall),
+        const SizedBox(height: AppSpacing.sm),
+        SegmentedButton<AppThemeMode>(
+          segments: [
+            for (final AppThemeMode mode in AppThemeMode.values)
+              ButtonSegment<AppThemeMode>(value: mode, label: Text(mode.label)),
+          ],
+          selected: {current},
+          showSelectedIcon: false,
+          onSelectionChanged: (selection) =>
+              ref.read(themeProvider.notifier).set(selection.first),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(current.description, style: theme.textTheme.bodySmall),
+      ],
+    );
+  }
 }
