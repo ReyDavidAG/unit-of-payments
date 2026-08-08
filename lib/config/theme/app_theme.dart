@@ -162,9 +162,11 @@ class AppTheme {
           borderSide: BorderSide(color: neutral),
         ),
         // Never animated in: a focus ring has to be there the instant focus is.
+        // Focus uses primary (teal), not the coral accent — the focus
+        // identity belongs to the same chromatic family as buttons.
         focusedBorder: OutlineInputBorder(
           borderRadius: inputRadius,
-          borderSide: BorderSide(color: focus, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: inputRadius,
@@ -173,10 +175,32 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface,
-        selectedColor: surface2,
+        selectedColor: primary.withValues(alpha: 0.15),
+        secondarySelectedColor: primary.withValues(alpha: 0.15),
         side: BorderSide(color: rule),
         labelStyle: text.labelLarge ?? const TextStyle(),
+        secondaryLabelStyle: (text.labelLarge ?? const TextStyle()).copyWith(
+          color: primary,
+        ),
         shape: RoundedRectangleBorder(borderRadius: inputRadius),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: primary.withValues(alpha: 0.18),
+        // Selected icon and label both read primary so the active tab
+        // sits in the same chromatic identity as buttons and inputs.
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: primary, size: 24);
+          }
+          return IconThemeData(color: muted, size: 24);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final base = text.labelSmall ?? const TextStyle();
+          if (states.contains(WidgetState.selected)) {
+            return base.copyWith(color: primary, fontWeight: FontWeight.w500);
+          }
+          return base.copyWith(color: muted);
+        }),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ink,
@@ -197,8 +221,9 @@ class AppTheme {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: accent,
+        color: primary,
         linearTrackColor: surface2,
+        circularTrackColor: surface2,
       ),
       splashColor: surface2,
       highlightColor: surface2,
