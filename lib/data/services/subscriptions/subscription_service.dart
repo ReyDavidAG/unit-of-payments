@@ -45,7 +45,7 @@ class SubscriptionService {
         .insert(item.toWrite())
         .select('id')
         .single();
-    return _fetchOne(inserted['id'] as String);
+    return fetchOne(inserted['id'] as String);
   }
 
   static Future<SubscriptionModel> update(SubscriptionModel item) async {
@@ -53,18 +53,19 @@ class SubscriptionService {
         .from(_table)
         .update(item.toWrite())
         .eq('id', item.id);
-    return _fetchOne(item.id);
+    return fetchOne(item.id);
   }
 
-  /// Soft delete. The view filters on `active`, so the row leaves the list
-  /// while its notification history keeps pointing at something real.
-  static Future<void> setActive(String id, {required bool active}) =>
+  /// Never a delete: the notification history points at these rows. Pausing
+  /// keeps the charge on the list and out of every total; cancelling drops it
+  /// from the view entirely, history intact.
+  static Future<void> setStatus(String id, SubscriptionStatus status) =>
       SupabaseService.client
           .from(_table)
-          .update({'active': active})
+          .update({'status': status.value})
           .eq('id', id);
 
-  static Future<SubscriptionModel> _fetchOne(String id) async {
+  static Future<SubscriptionModel> fetchOne(String id) async {
     final Map<String, dynamic> row = await SupabaseService.client
         .from(_view)
         .select()
