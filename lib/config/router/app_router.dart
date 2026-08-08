@@ -8,6 +8,7 @@ import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
 import '../../ui/screens/dashboard/dashboard_screen.dart';
+import '../../ui/screens/notifications/notification_history_screen.dart';
 import '../../ui/screens/shell/app_shell_screen.dart';
 import '../../ui/screens/subscriptions/subscriptions_screen.dart';
 
@@ -59,6 +60,15 @@ class AppRouter {
                 path: CardsScreen.routePath,
                 name: CardsScreen.routeName,
                 builder: (context, state) => const CardsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: NotificationHistoryScreen.routePath,
+                name: NotificationHistoryScreen.routeName,
+                builder: (context, state) => const NotificationHistoryScreen(),
               ),
             ],
           ),
