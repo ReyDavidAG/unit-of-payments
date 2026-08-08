@@ -436,6 +436,25 @@ se priorizan las más cercanas.
 
 Reprogramar todo en cada arranque es más barato que llevar un diff de qué está programado y qué no.
 
+### El manifest de Android es parte de la funcionalidad, no configuración
+
+`flutter_local_notifications` **no trae ni un receiver propio** — su manifest declara dos permisos y
+nada más. Los receivers se declaran en `android/app/src/main/AndroidManifest.xml`:
+
+| | Sin él |
+|---|---|
+| `ScheduledNotificationReceiver` | La alarma suena y **no se dibuja nada**. Programar devuelve éxito |
+| `ScheduledNotificationBootReceiver` + `RECEIVE_BOOT_COMPLETED` | Todo lo pendiente se pierde al reiniciar el teléfono |
+| `POST_NOTIFICATIONS` | No se puede ni pedir el permiso en Android 13+ |
+
+El primero faltaba y no lo veía nadie: `flutter analyze` no lee XML, y los tests de Dart tampoco.
+Por eso existe [android_manifest_test.dart](test/android_manifest_test.dart) — lee el archivo como
+texto y falla si un receiver desaparece.
+
+Las alarmas son **inexactas** (`inexactAllowWhileIdle`): una exacta pide otro permiso en Android 14+
+y un recordatorio de pago no lo necesita. La consecuencia es que un aviso de las 9:00 puede llegar
+unos minutos después, y que **nada programado se puede probar en segundos**.
+
 ---
 
 ## 8. Estructura Flutter
