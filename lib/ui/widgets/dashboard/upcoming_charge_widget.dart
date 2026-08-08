@@ -4,7 +4,6 @@ import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
-import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// A charge due soon. Denser than the subscriptions list on purpose: this is a
@@ -32,13 +31,16 @@ class UpcomingChargeWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
+          // The dot is this list's version of the swatch bar — same width, same
+          // colour, same question answered. It used to carry the brand accent,
+          // which made every Visa the same navy dot no matter which card it was.
           Container(
-            width: AppSpacing.xs,
-            height: AppSpacing.xs,
+            width: AppSpacing.swatchBar,
+            height: AppSpacing.swatchBar,
             decoration: BoxDecoration(
-              color: subscription.cardBrand == null
+              color: subscription.cardId == null
                   ? theme.colorScheme.outline
-                  : CardAssets.accent(subscription.cardBrand!),
+                  : AppColors.swatchFromHex(subscription.cardColor),
               shape: BoxShape.circle,
             ),
           ),

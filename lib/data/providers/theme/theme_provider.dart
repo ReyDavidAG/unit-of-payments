@@ -9,23 +9,36 @@ import '../../../config/theme/theme_mode_enum.dart';
 /// there is a session to read a row with, and it must survive with no network.
 /// Not in secure storage either — it is a preference, not a secret, and a
 /// keychain round trip for five characters is work nobody asked for.
-class ThemeNotifier extends AsyncNotifier<AppThemeMode> {
+///
+/// Synchronous on purpose: `main()` reads the persisted value before `runApp`
+/// and injects it via [themeProvider.overrideWith]. A first-frame fallback to
+/// `system` would flash the wrong theme for a frame before the disk read
+/// resolved — visible on hot restart, jarring on cold start.
+class ThemeNotifier extends Notifier<AppThemeMode> {
+  ThemeNotifier({this.initialMode = AppThemeMode.system});
+
+  final AppThemeMode initialMode;
+
   static const String _key = 'app_theme_mode';
 
-  @override
-  Future<AppThemeMode> build() async {
+  /// Synchronously loadable factory used by `main()` so the first frame is
+  /// painted in the persisted theme, not in `system`.
+  static Future<AppThemeMode> loadInitial() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     return AppThemeMode.fromName(prefs.getString(_key));
   }
 
+  @override
+  AppThemeMode build() => initialMode;
+
   Future<void> set(AppThemeMode mode) async {
     // Applied before the write: the theme should flip the instant it is
     // tapped, not after a disk round trip.
-    state = AsyncData(mode);
+    state = mode;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, mode.name);
   }
 }
 
-final AsyncNotifierProvider<ThemeNotifier, AppThemeMode> themeProvider =
-    AsyncNotifierProvider<ThemeNotifier, AppThemeMode>(ThemeNotifier.new);
+final NotifierProvider<ThemeNotifier, AppThemeMode> themeProvider =
+    NotifierProvider<ThemeNotifier, AppThemeMode>(() => ThemeNotifier());

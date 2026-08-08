@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/cards/card_model.dart';
+import '../../models/cards/card_statement_model.dart';
 import '../../models/cards/card_total_model.dart';
+import '../../models/subscriptions/debtor_model.dart';
 import '../../models/subscriptions/subscription_model.dart';
 import '../../services/cards/card_service.dart';
 import '../../services/subscriptions/subscription_service.dart';
@@ -63,4 +65,27 @@ final FutureProvider<List<SubscriptionModel>> upcomingProvider =
         return const [];
       }
       return SubscriptionService.fetchUpcoming();
+    });
+
+/// The open statement per card, straight from `v_card_statement`. This is the
+/// only place that answers "how much do I owe on the next deadline" — the
+/// monthly totals normalize cycles for comparison and cannot answer it.
+final FutureProvider<List<CardStatementModel>> cardStatementsProvider =
+    FutureProvider<List<CardStatementModel>>((ref) async {
+      ref.watch(subscriptionsProvider);
+      ref.watch(cardsProvider);
+      if (ref.watch(currentUserIdProvider) == null) {
+        return const [];
+      }
+      return CardService.fetchStatements();
+    });
+
+/// Who owes the user money, from `v_debtors`.
+final FutureProvider<List<DebtorModel>> debtorsProvider =
+    FutureProvider<List<DebtorModel>>((ref) async {
+      ref.watch(subscriptionsProvider);
+      if (ref.watch(currentUserIdProvider) == null) {
+        return const [];
+      }
+      return SubscriptionService.fetchDebtors();
     });

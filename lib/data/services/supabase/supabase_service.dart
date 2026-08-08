@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/environment.dart';
@@ -53,6 +54,10 @@ class SupabaseService {
   /// Anything unmapped falls through to the server message rather than a
   /// generic string that hides what actually happened.
   static String describeError(Object error) {
+    // Every failure the UI softens passes through here, so this is the one
+    // place that can guarantee the real cause still reaches the console. The
+    // user gets a sentence they can act on; the developer gets the code.
+    debugPrint('describeError: $error');
     if (error is AuthException) {
       return switch (error.code) {
         'invalid_credentials' => 'Correo o contraseña incorrectos.',

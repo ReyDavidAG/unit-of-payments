@@ -1,3 +1,4 @@
+import '../../models/subscriptions/debtor_model.dart';
 import '../../models/subscriptions/subscription_model.dart';
 import '../supabase/supabase_service.dart';
 
@@ -26,6 +27,15 @@ class SubscriptionService {
     return rows.map(SubscriptionModel.fromJson).toList();
   }
 
+  /// Who owes the user money, grouped and summed by Postgres.
+  static Future<List<DebtorModel>> fetchDebtors() async {
+    final List<Map<String, dynamic>> rows = await SupabaseService.client
+        .from('v_debtors')
+        .select()
+        .order('outstanding', ascending: false);
+    return rows.map(DebtorModel.fromJson).toList();
+  }
+
   /// Inserts against the table, then reads the row back from the view so the
   /// computed columns come from Postgres rather than a second implementation
   /// of the same date maths in Dart.
@@ -35,7 +45,7 @@ class SubscriptionService {
         .insert(item.toWrite())
         .select('id')
         .single();
-    return _fetchOne(inserted['id'] as String);
+    return fetchOne(inserted['id'] as String);
   }
 
   static Future<SubscriptionModel> update(SubscriptionModel item) async {
@@ -43,18 +53,19 @@ class SubscriptionService {
         .from(_table)
         .update(item.toWrite())
         .eq('id', item.id);
-    return _fetchOne(item.id);
+    return fetchOne(item.id);
   }
 
-  /// Soft delete. The view filters on `active`, so the row leaves the list
-  /// while its notification history keeps pointing at something real.
-  static Future<void> setActive(String id, {required bool active}) =>
+  /// Never a delete: the notification history points at these rows. Pausing
+  /// keeps the charge on the list and out of every total; cancelling drops it
+  /// from the view entirely, history intact.
+  static Future<void> setStatus(String id, SubscriptionStatus status) =>
       SupabaseService.client
           .from(_table)
-          .update({'active': active})
+          .update({'status': status.value})
           .eq('id', id);
 
-  static Future<SubscriptionModel> _fetchOne(String id) async {
+  static Future<SubscriptionModel> fetchOne(String id) async {
     final Map<String, dynamic> row = await SupabaseService.client
         .from(_view)
         .select()

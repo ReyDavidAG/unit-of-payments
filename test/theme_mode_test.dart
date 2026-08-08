@@ -17,16 +17,18 @@ void main() {
 
   test('the choice survives a restart', () async {
     SharedPreferences.setMockInitialValues({});
-    final ProviderContainer first = ProviderContainer();
-    addTearDown(first.dispose);
+    expect(await ThemeNotifier.loadInitial(), AppThemeMode.system);
 
-    expect(await first.read(themeProvider.future), AppThemeMode.system);
+    // Write through a notifier in a one-shot container, the way the
+    // profile screen does.
+    final ProviderContainer first = ProviderContainer(
+      overrides: [themeProvider.overrideWith(() => ThemeNotifier())],
+    );
+    addTearDown(first.dispose);
     await first.read(themeProvider.notifier).set(AppThemeMode.dark);
 
-    // A fresh container is what a cold start looks like.
-    final ProviderContainer restarted = ProviderContainer();
-    addTearDown(restarted.dispose);
-    expect(await restarted.read(themeProvider.future), AppThemeMode.dark);
+    // A fresh "session" loads the persisted value before runApp.
+    expect(await ThemeNotifier.loadInitial(), AppThemeMode.dark);
   });
 
   test('dark mode is its own palette, not an inverted light one', () {

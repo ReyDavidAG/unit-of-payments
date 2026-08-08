@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
-import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/cards/card_total_model.dart';
+import '../cards/card_brand_thumbnail.dart';
+import '../common/swatch_card_widget.dart';
 
-/// One card alias and what it costs per month. The swatch is a small square
-/// beside the alias, never the tile background.
+/// One card alias and what it costs per month. Same bar and same ring as the
+/// row on Tarjetas: the summary is a view of those cards, so it identifies
+/// them the same way rather than inventing a second visual language.
 class CardTotalWidget extends StatelessWidget {
   const CardTotalWidget({required this.total, required this.today, super.key});
 
@@ -18,38 +21,35 @@ class CardTotalWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final int count = total.subscriptionCount;
+    final Color swatch = AppColors.swatchFromHex(total.color);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.xs2),
-              child: Image.asset(
-                CardAssets.webp(total.brand),
-                width: AppSpacing.xl2,
-                height: AppSpacing.xl,
-                fit: BoxFit.cover,
-              ),
+    return SwatchCardWidget(
+      swatch: swatch,
+      child: Row(
+        children: [
+          CardBrandThumbnail(brand: total.brand, swatch: swatch),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  total.alias,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.xs3),
+                Text(_subtitle(count), style: theme.textTheme.bodySmall),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(total.alias, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.xs3),
-                  Text(_subtitle(count), style: theme.textTheme.bodySmall),
-                ],
-              ),
-            ),
-            Text(
-              MoneyHelper.amount(total.monthlyTotal),
-              style: AppTypography.amount(theme.colorScheme.onSurface),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            MoneyHelper.amount(total.monthlyTotal),
+            style: AppTypography.amount(theme.colorScheme.onSurface),
+          ),
+        ],
       ),
     );
   }

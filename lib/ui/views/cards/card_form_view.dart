@@ -31,6 +31,7 @@ class _CardFormViewState extends State<CardFormView> {
   late final TextEditingController _alias;
   late final TextEditingController _last4;
   late final TextEditingController _cutoff;
+  late final TextEditingController _due;
   late CardBrand _brand;
   // Kept so the DB column is still populated, but no UI surfaces it.
   late String _color;
@@ -49,6 +50,7 @@ class _CardFormViewState extends State<CardFormView> {
     _alias = TextEditingController(text: card?.alias ?? '');
     _last4 = TextEditingController(text: card?.last4 ?? '');
     _cutoff = TextEditingController(text: card?.cutoffDay?.toString() ?? '');
+    _due = TextEditingController(text: card?.paymentDueDay?.toString() ?? '');
     _brand = card?.brand ?? CardBrand.other;
     _color = card?.color ?? AppColors.hexOf(AppColors.defaultSwatch);
     _brandLocked = card != null && card.brand != CardBrand.other;
@@ -83,6 +85,7 @@ class _CardFormViewState extends State<CardFormView> {
     _alias.dispose();
     _last4.dispose();
     _cutoff.dispose();
+    _due.dispose();
     super.dispose();
   }
 
@@ -97,6 +100,7 @@ class _CardFormViewState extends State<CardFormView> {
       color: _color,
       last4: _last4.text.isEmpty ? null : _last4.text,
       cutoffDay: int.tryParse(_cutoff.text),
+      paymentDueDay: int.tryParse(_due.text),
     );
     Navigator.of(context).pop(card);
   }
@@ -179,6 +183,14 @@ class _CardFormViewState extends State<CardFormView> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
+                  const Expanded(child: SizedBox()),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              // The two dates sit together because they are read together and
+              // are the pair users mix up.
+              Row(
+                children: [
                   Expanded(
                     child: TextFormField(
                       controller: _cutoff,
@@ -187,12 +199,32 @@ class _CardFormViewState extends State<CardFormView> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: const InputDecoration(
                         labelText: 'Día de corte',
-                        helperText: 'Opcional',
+                        counterText: '',
                       ),
-                      validator: _validateCutoff,
+                      validator: _validateDay,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _due,
+                      keyboardType: TextInputType.number,
+                      maxLength: 2,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        labelText: 'Día límite',
+                        counterText: '',
+                      ),
+                      validator: _validateDay,
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'El corte cierra tu estado de cuenta. El límite es el día en '
+                'que hay que pagarlo, y el que te avisamos.',
+                style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
@@ -209,7 +241,7 @@ class _CardFormViewState extends State<CardFormView> {
     );
   }
 
-  String? _validateCutoff(String? value) {
+  String? _validateDay(String? value) {
     if (value == null || value.isEmpty) {
       return null;
     }

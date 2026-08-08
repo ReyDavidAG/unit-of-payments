@@ -34,16 +34,24 @@ class NotificationScheduler {
       );
     }
 
-    await NotificationLogService.record([
-      for (final PlannedReminder item in planned)
-        NotificationLogModel(
-          subscriptionId: item.subscriptionId,
-          chargeDate: item.chargeDate,
-          scheduledFor: item.fireAt,
-          amount: item.amount,
-          title: item.title,
-        ),
-    ]);
+    // Best-effort, and deliberately last: the reminders are already scheduled
+    // on the device by now, so a failed write costs history, not alarms.
+    // Letting it throw here would fail the sync and, through it, the screen
+    // that only wanted to read that history.
+    try {
+      await NotificationLogService.record([
+        for (final PlannedReminder item in planned)
+          NotificationLogModel(
+            subscriptionId: item.subscriptionId,
+            chargeDate: item.chargeDate,
+            scheduledFor: item.fireAt,
+            amount: item.amount,
+            title: item.title,
+          ),
+      ]);
+    } on Object catch (error) {
+      debugPrint('notification history not recorded: $error');
+    }
     return planned.length;
   }
 

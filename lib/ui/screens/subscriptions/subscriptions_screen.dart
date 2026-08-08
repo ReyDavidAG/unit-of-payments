@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
@@ -9,6 +10,7 @@ import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/subscriptions/subscription_form_view.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
 import '../../widgets/common/theme_toggle_button.dart';
@@ -48,6 +50,7 @@ class SubscriptionsScreen extends ConsumerWidget {
       context,
       cards: cards,
       initial: existing,
+      onStatus: (status) => _changeStatus(messenger, ref, existing, status),
     );
     if (item == null) {
       return;
@@ -55,6 +58,48 @@ class SubscriptionsScreen extends ConsumerWidget {
     await _run(
       messenger,
       () => ref.read(subscriptionsProvider.notifier).edit(item),
+    );
+  }
+
+  /// Cancelling is confirmed inside the sheet and is not undoable from here.
+  /// Pausing is one tap either way, so it offers the undo instead of a dialog.
+  Future<void> _changeStatus(
+    ScaffoldMessengerState messenger,
+    WidgetRef ref,
+    SubscriptionModel item,
+    SubscriptionStatus status,
+  ) async {
+    final SubscriptionsNotifier notifier = ref.read(
+      subscriptionsProvider.notifier,
+    );
+    final bool cancelling = status == SubscriptionStatus.cancelled;
+    final bool ok = await _run(
+      messenger,
+      () =>
+          cancelling ? notifier.cancel(item) : notifier.setStatus(item, status),
+    );
+    if (!ok) {
+      return;
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(switch (status) {
+          SubscriptionStatus.paused => '${item.name} en pausa',
+          SubscriptionStatus.active => '${item.name} reanudada',
+          SubscriptionStatus.cancelled => '${item.name} cancelada',
+        }),
+        action: cancelling
+            ? null
+            : SnackBarAction(
+                label: 'Deshacer',
+                // Through _run: the snackbar outlives this screen, so an undo
+                // that fails must surface rather than throw into the void.
+                onPressed: () => _run(
+                  messenger,
+                  () => notifier.setStatus(item, item.status),
+                ),
+              ),
+      ),
     );
   }
 
@@ -93,7 +138,12 @@ class SubscriptionsScreen extends ConsumerWidget {
               heroTag: null,
               onPressed: () => _create(context, ref),
               tooltip: 'Agregar suscripción',
-              child: const Icon(Icons.add),
+              // The FAB borrows the active tab's hue (success) so the action
+              // and the section read as one — the tab already trained the eye
+              // to expect that colour on this screen.
+              backgroundColor: Theme.of(context).success.withAlpha(200),
+              foregroundColor: AppColors.paper,
+              child: const Icon(Icons.note_add_outlined),
             ),
       body: subscriptions.when(
         loading: () => ListView.separated(
@@ -103,10 +153,9 @@ class SubscriptionsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.listGap),
           itemBuilder: (_, _) => const SubscriptionTileSkeleton(),
         ),
-        error: (error, _) => EmptyStateWidget(
-          message: SupabaseService.describeError(error),
-          actionLabel: 'Reintentar',
-          onAction: () => ref.invalidate(subscriptionsProvider),
+        error: (error, _) => ErrorRetryWidget(
+          error: error,
+          onRetry: () => ref.invalidate(subscriptionsProvider),
         ),
         data: (items) => items.isEmpty
             ? EmptyStateWidget(

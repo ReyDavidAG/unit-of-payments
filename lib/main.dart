@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/router/app_router.dart';
 import 'config/theme/theme_mode_enum.dart';
@@ -17,7 +18,22 @@ Future<void> main() async {
   await initializeDateFormatting('es_MX');
   Intl.defaultLocale = 'es_MX';
   await SupabaseService.initialize();
-  runApp(const ProviderScope(child: MainApp()));
+  // Read the persisted theme synchronously, before the first frame, so the
+  // app never paints in the wrong theme for a frame before flipping.
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final AppThemeMode initialMode = AppThemeMode.fromName(
+    prefs.getString('app_theme_mode'),
+  );
+  runApp(
+    ProviderScope(
+      overrides: [
+        themeProvider.overrideWith(
+          () => ThemeNotifier(initialMode: initialMode),
+        ),
+      ],
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends ConsumerWidget {
@@ -25,10 +41,7 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Defaults to system while the stored value loads, so the first frame is
-    // never the wrong theme flashing before the right one.
-    final AppThemeMode mode =
-        ref.watch(themeProvider).value ?? AppThemeMode.system;
+    final AppThemeMode mode = ref.watch(themeProvider);
 
     return MaterialApp.router(
       title: 'Unit of Payments',

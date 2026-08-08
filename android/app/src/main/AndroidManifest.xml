@@ -35,6 +35,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Draws the notification when the alarm fires. The plugin ships no
+             receivers of its own, so without this the alarm goes off and
+             nothing appears: scheduling succeeds and delivery never happens. -->
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <!-- Restores pending reminders after a reboot. -->
         <receiver android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

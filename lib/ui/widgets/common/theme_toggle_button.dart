@@ -13,8 +13,7 @@ class ThemeToggleButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AppThemeMode current =
-        ref.watch(themeProvider).value ?? AppThemeMode.light;
+    final AppThemeMode current = ref.watch(themeProvider);
     final bool isDark = current == AppThemeMode.dark;
     final IconData icon = isDark
         ? Icons.light_mode_outlined

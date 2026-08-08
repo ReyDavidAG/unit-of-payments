@@ -1,4 +1,5 @@
 import '../../models/cards/card_model.dart';
+import '../../models/cards/card_statement_model.dart';
 import '../../models/cards/card_total_model.dart';
 import '../supabase/supabase_service.dart';
 
@@ -26,6 +27,16 @@ class CardService {
         .select()
         .order('monthly_total', ascending: false);
     return rows.map(CardTotalModel.fromJson).toList();
+  }
+
+  /// The open statement per card. Only cards with a cutoff day appear: without
+  /// one there is no window to sum over.
+  static Future<List<CardStatementModel>> fetchStatements() async {
+    final List<Map<String, dynamic>> rows = await SupabaseService.client
+        .from('v_card_statement')
+        .select()
+        .order('closes_on');
+    return rows.map(CardStatementModel.fromJson).toList();
   }
 
   static Future<CardModel> create(CardModel card) async {

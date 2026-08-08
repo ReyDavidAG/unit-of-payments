@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
-import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/cards/card_model.dart';
+import '../common/swatch_card_widget.dart';
+import 'card_brand_thumbnail.dart';
 
 /// Alias in title weight, brand WebP as a small card thumbnail beside it,
-/// last4 in mono. The WebP carries the brand identity; the surrounding
-/// tile stays neutral.
+/// last4 in mono. The swatch runs down the edge and rings the art — the same
+/// bar every charge on this card draws, so the link is learned once.
 class CardTileWidget extends StatelessWidget {
   const CardTileWidget({
     required this.card,
@@ -22,51 +24,29 @@ class CardTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final Color swatch = AppColors.swatchFromHex(card.color);
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.cardPadding),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppSpacing.xs2),
-                child: Image.asset(
-                  CardAssets.webp(card.brand),
-                  width: AppSpacing.xl2,
-                  height: AppSpacing.xl,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(card.alias, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.xs3),
-                    _Meta(card: card),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: onArchive,
-                icon: const Icon(Icons.archive_outlined),
-                tooltip: 'Archivar',
-              ),
-            ],
+    return SwatchCardWidget(
+      swatch: swatch,
+      onTap: onTap,
+      child: Row(
+        children: [
+          CardBrandThumbnail(brand: card.brand, swatch: swatch),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: _Details(card: card)),
+          IconButton(
+            onPressed: onArchive,
+            icon: const Icon(Icons.archive_outlined),
+            tooltip: 'Archivar',
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _Meta extends StatelessWidget {
-  const _Meta({required this.card});
+class _Details extends StatelessWidget {
+  const _Details({required this.card});
 
   final CardModel card;
 
@@ -75,14 +55,36 @@ class _Meta extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final Color muted = theme.textTheme.bodySmall?.color ?? theme.hintColor;
 
-    if (card.last4 == null) {
-      return Text(card.brand.label, style: theme.textTheme.bodySmall);
-    }
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(card.brand.label, style: theme.textTheme.bodySmall),
-        const SizedBox(width: AppSpacing.xs),
-        Text('•••• ${card.last4}', style: AppTypography.figure(muted)),
+        Text(
+          card.alias,
+          style: theme.textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: AppSpacing.xs3),
+        if (card.last4 == null)
+          Text(card.brand.label, style: theme.textTheme.bodySmall)
+        else
+          Row(
+            children: [
+              // The brand is the one that gives: its artwork is already on the
+              // thumbnail, while the last4 is the only thing here that tells
+              // two cards of the same brand apart.
+              Flexible(
+                child: Text(
+                  card.brand.label,
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text('•••• ${card.last4}', style: AppTypography.figure(muted)),
+            ],
+          ),
       ],
     );
   }

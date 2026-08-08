@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/app_colors.dart';
+import '../../../config/theme/app_motion.dart';
 import '../../../config/theme/app_spacing.dart';
+import 'warning_dot_widget.dart';
 
 /// Bottom navigation where each tab carries its own chromatic identity,
 /// drawn from the semantic palette. A standard NavigationBar paints every
@@ -97,11 +99,16 @@ class NavBarItem {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.warning = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+
+  /// Something on that tab needs attention. Drawn as a badge on the chip so
+  /// the user finds it from whichever tab they happen to be on.
+  final bool warning;
 }
 
 class _NavDestination extends StatelessWidget {
@@ -121,6 +128,11 @@ class _NavDestination extends StatelessWidget {
   final Color unselectedColor;
   final VoidCallback onTap;
 
+  /// Smaller than the default NavigationBar pill, and squarer: radiusInput,
+  /// not radiusPill.
+  static const double _chipHeight = 28;
+  static const double _chipWidth = 48;
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -135,30 +147,44 @@ class _NavDestination extends StatelessWidget {
             // Solid coloured chip behind the icon, paper-coloured icon
             // inside. Smaller than the default NavigationBar pill and
             // sharper corners (radiusInput, not radiusPill).
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              height: 28,
-              width: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? color : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-              ),
-              child: Icon(
-                selected ? item.selectedIcon : item.icon,
-                size: 20,
-                // Icon on the chip is paper (white-ish); off-chip it is
-                // the muted neutral so the unselected tabs recede.
-                color: selected ? AppColors.paper : unselectedColor,
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: AppMotion.short,
+                  curve: AppMotion.easeOut,
+                  height: _chipHeight,
+                  width: _chipWidth,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? color : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                  ),
+                  child: Icon(
+                    selected ? item.selectedIcon : item.icon,
+                    size: 20,
+                    // Icon on the chip is paper (white-ish); off-chip it is
+                    // the muted neutral so the unselected tabs recede.
+                    color: selected ? AppColors.paper : unselectedColor,
+                  ),
+                ),
+                if (item.warning)
+                  Positioned(
+                    top: -AppSpacing.xs2,
+                    right: -AppSpacing.xs2,
+                    child: const WarningDotWidget(
+                      tooltip: 'Hay cargos que necesitan tu atención',
+                      size: 14,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: AppSpacing.xs2),
             Text(
               item.label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                // Four labels across a phone: the 11 dp label token with its
+                // display letterspacing dialled back to nav scale.
                 letterSpacing: 0.1,
                 // Selected label takes the ink colour so it reads on the
                 // solid chip's coloured halo; off-chip, the muted

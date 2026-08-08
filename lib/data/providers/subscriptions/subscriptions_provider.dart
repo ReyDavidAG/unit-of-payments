@@ -35,23 +35,42 @@ class SubscriptionsNotifier extends AsyncNotifier<List<SubscriptionModel>> {
     );
   }
 
-  Future<void> deactivate(SubscriptionModel item) async {
+  /// Stays on the list, out of every total. The row is re-read rather than
+  /// patched locally: pausing changes what the view computes, not just a flag.
+  Future<void> setStatus(
+    SubscriptionModel item,
+    SubscriptionStatus status,
+  ) async {
+    await SubscriptionService.setStatus(item.id, status);
+    final SubscriptionModel updated = await SubscriptionService.fetchOne(
+      item.id,
+    );
+    state = AsyncData(
+      [
+        for (final SubscriptionModel current
+            in state.value ?? const <SubscriptionModel>[])
+          if (current.id == updated.id) updated else current,
+      ]..sort(_byNextCharge),
+    );
+  }
+
+  /// Leaves the view, so there is no row left to re-read. Rolled back on
+  /// failure rather than leaving the list lying about what was cancelled.
+  Future<void> cancel(SubscriptionModel item) async {
     final List<SubscriptionModel> previous = state.value ?? const [];
     state = AsyncData([
       for (final SubscriptionModel current in previous)
         if (current.id != item.id) current,
     ]);
     try {
-      await SubscriptionService.setActive(item.id, active: false);
+      await SubscriptionService.setStatus(
+        item.id,
+        SubscriptionStatus.cancelled,
+      );
     } on Object {
       state = AsyncData(previous);
       rethrow;
     }
-  }
-
-  Future<void> restore(SubscriptionModel item) async {
-    await SubscriptionService.setActive(item.id, active: true);
-    state = AsyncData([...?state.value, item]..sort(_byNextCharge));
   }
 
   /// Nulls last: a subscription without a computed next charge is one whose
@@ -68,8 +87,20 @@ class SubscriptionsNotifier extends AsyncNotifier<List<SubscriptionModel>> {
 }
 
 /// What the user pays per month, everything normalized by the database.
+/// Paused charges are excluded: the list still shows them, but they cost
+/// nothing until they are resumed.
 final Provider<double> monthlyTotalProvider = Provider<double>((ref) {
   final List<SubscriptionModel> items =
       ref.watch(subscriptionsProvider).value ?? const [];
-  return items.fold(0, (sum, item) => sum + (item.monthlyAmount ?? 0));
+  return items
+      .where((item) => item.status == SubscriptionStatus.active)
+      .fold(0, (sum, item) => sum + (item.monthlyAmount ?? 0));
+});
+
+/// How many charges still point at an archived card. Drives the badge on the
+/// Suscripciones tab, so the warning is visible from any other tab.
+final Provider<int> orphanedCardCountProvider = Provider<int>((ref) {
+  final List<SubscriptionModel> items =
+      ref.watch(subscriptionsProvider).value ?? const [];
+  return items.where((item) => item.cardArchived).length;
 });

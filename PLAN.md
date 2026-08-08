@@ -49,6 +49,8 @@ Esto es lo primero porque el dominio toca tarjetas.
 ```sql
 create type public.billing_cycle as enum ('weekly', 'monthly', 'yearly', 'custom');
 create type public.card_brand   as enum ('visa', 'mastercard', 'amex', 'other');
+create type public.charge_kind  as enum ('subscription', 'installment');
+create type public.notice_kind  as enum ('charge', 'cutoff', 'payment_due');
 ```
 
 ### 3.2 `profiles`
@@ -74,7 +76,8 @@ create table public.cards (
   alias        text not null,                 -- "BBVA Oro", "Nómina Santander"
   brand        public.card_brand not null default 'other',
   last4        char(4),                       -- optional, display only
-  cutoff_day   smallint,                      -- statement cutoff day, optional
+  cutoff_day      smallint,                   -- statement cutoff day, optional
+  payment_due_day smallint,                   -- payment deadline, optional
   color        text not null default '#4A5568',
   archived     boolean not null default false,
   created_at   timestamptz not null default now(),
@@ -82,12 +85,18 @@ create table public.cards (
   constraint cards_alias_len  check (char_length(alias) between 1 and 40),
   constraint cards_last4_fmt  check (last4 is null or last4 ~ '^[0-9]{4}$'),
   constraint cards_cutoff_rng check (cutoff_day is null or cutoff_day between 1 and 31),
+  constraint cards_due_rng    check (payment_due_day is null or payment_due_day between 1 and 31),
   constraint cards_alias_uniq unique (user_id, alias)
 );
 ```
 
 `cards_last4_fmt` acepta 4 dígitos y **nada más**: la constraint es la que impide que alguien
 pegue un PAN completo en ese campo.
+
+**Son dos fechas distintas y las dos importan.** El *corte* cierra el estado de cuenta: lo que
+compres después cae en el siguiente. La *fecha límite de pago* es la que tiene consecuencia — si no
+pagas, hay intereses y se pierden los meses sin intereses. El aviso accionable es el del límite; el
+corte solo determina **cuáles** cargos entran en ese estado de cuenta.
 
 ### 3.4 `subscriptions`
 
@@ -101,11 +110,14 @@ create table public.subscriptions (
   cycle               public.billing_cycle not null default 'monthly',
   custom_days         smallint,
   first_charge_date   date not null,
-  ends_on             date,
+  ends_on             date,                    -- derived by trigger for installments
   reminder_days_before smallint not null default 1,
   category            text,
-  active              boolean not null default true,
+  status              public.subscription_status not null default 'active',
   notes               text,
+  kind                public.charge_kind not null default 'subscription',
+  installments_total  smallint,                -- 12 = "12 MSI"
+  owed_by             text,                    -- someone else repays this charge
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
 
@@ -116,7 +128,12 @@ create table public.subscriptions (
     (cycle = 'custom' and custom_days between 1 and 365) or
     (cycle <> 'custom' and custom_days is null)
   ),
-  constraint subs_ends_after  check (ends_on is null or ends_on >= first_charge_date)
+  constraint subs_ends_after  check (ends_on is null or ends_on >= first_charge_date),
+  constraint subs_installments check (
+    (kind = 'installment' and installments_total between 1 and 60 and cycle = 'monthly') or
+    (kind = 'subscription' and installments_total is null)
+  ),
+  constraint subs_owed_by_len check (owed_by is null or char_length(owed_by) between 1 and 40)
 );
 ```
 
@@ -125,6 +142,46 @@ create table public.subscriptions (
 `subs_custom_days` es la regla que impide el estado imposible "ciclo mensual con 45 días de período".
 Esa clase de validación vive acá, no en Dart.
 
+#### Tres estados, una columna
+
+`status` reemplazó al `active boolean` original. Un booleano podía decir "corriendo" o "se fue", nunca
+"pausada, la retomo". Y dos booleanos se contradicen entre sí, así que la columna es un enum:
+
+| | Aparece en la lista | Cuenta en totales, avisos y estado de cuenta |
+|---|---|---|
+| `active` | sí | sí |
+| `paused` | sí — hay que poder retomarla | no |
+| `cancelled` | no | no |
+
+`v_subscriptions` filtra solo `cancelled` y expone `status`; `v_card_totals`, `v_upcoming`, `v_debtors`
+y `v_card_statement` filtran a `active`. El historial de avisos nunca se borra: apunta a filas que
+siguen existiendo.
+
+#### Contado = un plan de un pago
+
+`installments_total` baja su mínimo de 2 a 1. Un pago de contado es un MSI de longitud uno: el mismo
+trigger le pone `ends_on = first_charge_date`, `installments_paid` devuelve 1 el día del cargo, y la
+fila se apaga sola al saldarse. Cero código nuevo, cero ramas nuevas.
+
+#### Los MSI viven en esta tabla, no en una propia
+
+Un plan a meses sin intereses **es** un cargo mensual a una tarjeta con fecha de fin. Reusando esta
+tabla, `next_charge_date`, los totales por tarjeta, las 14 políticas RLS y el programador de
+notificaciones siguen funcionando sin un solo cambio. Una tabla aparte duplicaría RLS y convertiría
+cada total en un `union` para siempre.
+
+`amount` sigue siendo **lo que se cobra cada mes**. La deuda total es `amount × installments_total`;
+no se guarda aparte porque dos columnas que dicen lo mismo terminan discrepando.
+
+**No hay columna de mensualidades pagadas.** El cargo es automático, así que "pagada" es "la fecha ya
+pasó" — se deriva con `installments_paid()`. Es la misma regla que ya rige a `next_charge_date`: un
+valor guardado se queda viejo solo, y un contador exigiría que el usuario palomee casillas.
+
+`owed_by` cubre el caso de prestar la tarjeta para que alguien pague a MSI, y también el Netflix
+compartido: aplica a los dos `kind`. Es texto y no una tabla de deudores porque agrupar por texto ya
+responde "cuánto me debe X", y una tabla compraría integridad referencial sobre un campo que teclea
+una sola persona.
+
 ### 3.5 `notification_log` — historial
 
 ```sql
@@ -132,23 +189,43 @@ create table public.notification_log (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null default auth.uid() references auth.users(id) on delete cascade,
   subscription_id uuid references public.subscriptions(id) on delete cascade,
+  card_id         uuid,                        -- cutoff / payment_due notices
+  kind            public.notice_kind not null default 'charge',
   charge_date     date not null,
   scheduled_for   timestamptz not null,
   delivered_at    timestamptz,
   opened_at       timestamptz,
+  acknowledged_at timestamptz,                 -- "enterado"
   amount          numeric(12,2) not null,
   title           text not null,
   created_at      timestamptz not null default now(),
 
-  constraint notif_once unique (subscription_id, charge_date)
+  constraint notif_target_xor check ((subscription_id is not null) <> (card_id is not null)),
+  constraint notif_card_fk foreign key (card_id, user_id)
+    references public.cards (id, user_id) on delete cascade
 );
+
+create unique index notif_once_sub  on public.notification_log (subscription_id, charge_date);
+create unique index notif_once_card on public.notification_log (card_id, charge_date, kind);
 ```
 
-`notif_once` es lo que hace el registro **idempotente**: el cliente reprograma notificaciones en cada
-arranque y la constraint evita duplicados sin que el cliente lleve la cuenta. `on conflict do nothing`.
+Los índices únicos son lo que hace el registro **idempotente**: el cliente reprograma notificaciones
+en cada arranque y evitan duplicados sin que lleve la cuenta. `on conflict do nothing`. Reemplazaron a
+`notif_once`, que asumía que todo aviso tenía suscripción.
+
+**No llevan `where`, y eso no es un descuido.** `ON CONFLICT` solo puede inferir un índice único
+**no parcial**, así que un predicado aquí rompe el upsert del programador con `42P10`. La garantía es
+la misma sin él: los nulos son distintos entre sí en un índice único, de modo que un aviso de tarjeta
+(`subscription_id` nulo) nunca choca en la llave de suscripción, ni al revés. `smoke.sql` reproduce
+ese upsert exacto para que la regresión no vuelva.
 
 Como las notificaciones locales disparan con la app cerrada, `delivered_at` se marca cuando el
 cliente arranca y ve que la fecha ya pasó, y `opened_at` cuando el usuario toca la notificación.
+
+**`acknowledged_at` es timestamp, no booleano.** Contesta lo mismo con `is not null` y además dice
+*cuándo* — que es el dato que sirve para saber si te enteraste antes o después de la fecha límite.
+Un bool tira esa información sin ahorrar nada. No es lo mismo que `opened_at`: abrir es haber visto,
+`acknowledged_at` es haberse hecho cargo.
 
 ---
 
@@ -216,13 +293,17 @@ select s.*,
        c.alias  as card_alias,
        c.brand  as card_brand,
        c.color  as card_color,
+       coalesce(c.archived, false) as card_archived,
        public.next_charge_date(s.first_charge_date, s.cycle, s.custom_days) as next_charge_date,
        public.monthly_amount(s.amount, s.cycle, s.custom_days)              as monthly_amount
 from public.subscriptions s
 left join public.cards c on c.id = s.card_id
-where s.active
+where s.status <> 'cancelled'
   and (s.ends_on is null or s.ends_on >= current_date);
 ```
+
+`card_archived` viaja en la vista porque la tarjeta ya no está en ningún selector, pero el cargo
+que la apunta sí sigue en la lista, y es él quien tiene que avisar.
 
 ```sql
 -- "¿Cuánto pago por cada tarjeta?"
@@ -232,10 +313,13 @@ select c.id as card_id, c.alias, c.brand, c.color,
        coalesce(sum(v.monthly_amount), 0) as monthly_total,
        min(v.next_charge_date)        as next_charge_date
 from public.cards c
-left join public.v_subscriptions v on v.card_id = c.id
+left join public.v_subscriptions v on v.card_id = c.id and v.status = 'active'
 where not c.archived
 group by c.id;
 ```
+
+El filtro de `status` va en el join y no en el `where`: una tarjeta con todos sus cargos pausados
+sigue perteneciendo al resumen, leyendo cero.
 
 ```sql
 -- Cobros de los próximos 30 días, para la pantalla principal
@@ -253,6 +337,41 @@ creó y devuelve las filas de todos los usuarios.
 - `set_updated_at` en `subscriptions` — `before update`, pone `updated_at = now()`.
 - `handle_new_user` en `auth.users` — `after insert`, crea el `profiles` correspondiente.
   Va con `security definer` y `search_path = ''` (si no, es un vector de escalada de privilegios).
+- `set_installment_end` en `subscriptions` — `before insert or update`, deriva
+  `ends_on = first_charge_date + (installments_total - 1) meses` cuando `kind = 'installment'`.
+  Es lo que hace que un MSI **se apague solo** al saldarse: `v_subscriptions` ya filtra por `ends_on`.
+
+### 4.5 MSI y estado de cuenta
+
+| Función | Devuelve |
+|---|---|
+| `installments_paid(first, total, on)` | Mensualidades ya cobradas, tope en `total` |
+| `cutoff_on(day, in_month)` | El día de corte acotado al mes: 31 en febrero es 28 |
+| `statement_close(day, from)` | El corte que cierra en o después de `from` |
+| `payment_due_after(due_day, close)` | El primer día límite estrictamente posterior al corte |
+| `charge_dates_between(first, cycle, custom, from, to)` | Las fechas de cobro **reales** en una ventana |
+
+`charge_dates_between` existe porque `monthly_amount()` **no sirve** para un estado de cuenta:
+normaliza semanal y anual a un promedio comparable, y aquí hace falta saber cuántos cobros caen de
+verdad entre dos fechas. Repite la aritmética `n * step` desde la fecha original en vez de sumar
+sobre el resultado anterior — el mismo error de arrastre en fin de mes que evita `next_charge_date`.
+
+| Vista | Contesta |
+|---|---|
+| `v_debtors` | Cuánto te debe cada persona y en cuántos pagos |
+| `v_card_statement` | Ventana abierta por tarjeta, fecha límite, total a pagar y cuánto te reembolsan |
+
+`v_card_totals` gana `outstanding_total` (deuda MSI pendiente), `installment_count` y
+`monthly_owed_by_others`. `v_subscriptions` gana `installments_paid`, `installments_left` y
+`outstanding` — cero en las suscripciones abiertas, para que sumar deuda por tarjeta sea una suma.
+
+Las cinco funciones toman `int`, no `smallint`: Postgres no reduce `integer` a `smallint` al
+resolver una llamada, así que un `smallint` las volvía invocables solo desde columnas.
+
+Verificación en `supabase/tests/`: `checks.sql` afirma sobre las funciones puras, `smoke.sql`
+inserta filas reales, comprueba trigger, vistas y el XOR de avisos, y revierte con un `raise`.
+Sus expectativas son relativas a `current_date` — fijar fechas literales hacía que el archivo
+pasara hoy y se rompiera solo en dos semanas.
 
 ---
 
@@ -345,6 +464,25 @@ se priorizan las más cercanas.
 
 Reprogramar todo en cada arranque es más barato que llevar un diff de qué está programado y qué no.
 
+### El manifest de Android es parte de la funcionalidad, no configuración
+
+`flutter_local_notifications` **no trae ni un receiver propio** — su manifest declara dos permisos y
+nada más. Los receivers se declaran en `android/app/src/main/AndroidManifest.xml`:
+
+| | Sin él |
+|---|---|
+| `ScheduledNotificationReceiver` | La alarma suena y **no se dibuja nada**. Programar devuelve éxito |
+| `ScheduledNotificationBootReceiver` + `RECEIVE_BOOT_COMPLETED` | Todo lo pendiente se pierde al reiniciar el teléfono |
+| `POST_NOTIFICATIONS` | No se puede ni pedir el permiso en Android 13+ |
+
+El primero faltaba y no lo veía nadie: `flutter analyze` no lee XML, y los tests de Dart tampoco.
+Por eso existe [android_manifest_test.dart](test/android_manifest_test.dart) — lee el archivo como
+texto y falla si un receiver desaparece.
+
+Las alarmas son **inexactas** (`inexactAllowWhileIdle`): una exacta pide otro permiso en Android 14+
+y un recordatorio de pago no lo necesita. La consecuencia es que un aviso de las 9:00 puede llegar
+unos minutos después, y que **nada programado se puede probar en segundos**.
+
 ---
 
 ## 8. Estructura Flutter
@@ -409,6 +547,8 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 | 10 | `feature/theme-mode` | Selector claro / oscuro / sistema con persistencia local, paleta oscura Wayfare ✅ |
 | 11 | `feature/animations` | Envoltorios de movimiento, skeletons por pantalla, shell con swipe entre tabs ✅ |
 | 12 | `feature/app-icon-and-splash` | Icono, splash, marca Vence, WebPs de marca de tarjeta, identidad cromática por tab ✅ |
+| 13 | `feature/mob-debpts` | **Base de datos**: MSI, deuda de terceros, fecha límite de pago y estado de cuenta por tarjeta ✅ aplicado, advisors en cero |
+| 13.1 | `feature/mob-debpts` | **Capa Flutter**: modelos, formularios de MSI y de día límite, progreso en la lista, corte y reembolsos en el resumen ✅ |
 
 Las fases 1 y 2 no tocan Dart. La 3 no se empieza hasta que la 1 esté probada: si el esquema cambia
 después, se rehace el cliente.
@@ -435,5 +575,15 @@ configurados en GitHub, así que el workflow de keep-alive nunca ha corrido.
 
 Compartir suscripciones entre usuarios, exportar a CSV, cobro real o vinculación bancaria,
 presupuestos, widgets de home screen, modo web/escritorio.
+
+Descartado a propósito al diseñar los MSI:
+
+- **Tabla de gastos generales o "saldo de la tarjeta".** La app solo conoce la deuda que le
+  contaron. Un campo de saldo estaría mal desde el primer café comprado fuera de la app, y un número
+  equivocado es peor que uno ausente.
+- **Una fila por mensualidad.** Doce renglones para representar lo que dos fechas ya dicen.
+- **Reembolso parcial** (*"me paga la mitad"*). Exige separar `amount` de lo adeudado; se agrega
+  cuando haga falta.
+- **MSI con intereses.** No son MSI.
 
 Ninguna de estas cambia el esquema de forma incompatible, así que no se diseña para ellas hoy.

@@ -24,6 +24,21 @@ flutter test                                 # unit + widget tests
 ./scripts/format.sh                          # dart format + flutter analyze  <-- run at the end of EVERY change
 ```
 
+Database migrations go through an explicit `--db-url`. `supabase link` is broken in CLI 2.112
+(it crashes parsing `inserted_at` from the API), and without it `db push` never learns the IPv4
+route and refuses with a misleading "IPv6 is not supported" error. The pooler host settles it:
+
+```bash
+DB="postgresql://postgres.<project-ref>:<db-password>@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
+supabase db push --db-url "$DB"                              # apply migrations
+supabase db query --db-url "$DB" --file supabase/tests/smoke.sql   # end-to-end, rolls itself back
+supabase db advisors --type security --db-url "$DB"          # must report zero
+```
+
+`aws-1`, not `aws-0`, and the user is `postgres.<project-ref>` — the bare `postgres` gets
+`tenant/user not found`. Port 5432 (session), never 6543: transaction mode mishandles DDL.
+The password is the **database** one, not the account login.
+
 Secrets are compile-time, never a bundled asset: copy `.env.example` to `.env` and pass
 `--dart-define-from-file=.env` on every `run` and `build`. Read them only through
 [Environment](lib/core/constants/environment.dart), never `String.fromEnvironment` directly.

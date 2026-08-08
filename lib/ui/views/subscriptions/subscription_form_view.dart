@@ -1,27 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../config/theme/app_spacing.dart';
+import '../../../core/helpers/commitment_summary.dart';
 import '../../../core/helpers/money_helper.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
+import '../../widgets/common/custom_date_picker.dart';
+import '../../widgets/subscriptions/amount_field_widget.dart';
+import '../../widgets/subscriptions/card_selector_widget.dart';
+import '../../widgets/subscriptions/first_charge_row_widget.dart';
+import '../../widgets/subscriptions/installment_term_selector_widget.dart';
+import '../../widgets/subscriptions/subscription_status_actions_widget.dart';
+import 'form_charge_section.dart';
+import 'form_header.dart';
+import 'form_optional_section.dart';
 
-/// Create or edit a subscription. Returns the built model, or null when
-/// dismissed. Persisting is the caller's job.
+/// Create or edit a subscription or an installment plan. Returns the built
+/// model, or null when dismissed. Persisting is the caller's job.
 class SubscriptionFormView extends StatefulWidget {
-  const SubscriptionFormView({required this.cards, this.initial, super.key});
+  const SubscriptionFormView({
+    required this.cards,
+    this.initial,
+    this.onStatus,
+    super.key,
+  });
 
   final List<CardModel> cards;
   final SubscriptionModel? initial;
+
+  /// Pause, resume or cancel. The sheet closes first and hands the transition
+  /// back: the screen owns the notifier and the snackbar, not this view.
+  final ValueChanged<SubscriptionStatus>? onStatus;
 
   static Future<SubscriptionModel?> show(
     BuildContext context, {
     required List<CardModel> cards,
     SubscriptionModel? initial,
+    ValueChanged<SubscriptionStatus>? onStatus,
   }) => showModalBottomSheet<SubscriptionModel>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => SubscriptionFormView(cards: cards, initial: initial),
+    // iOS notch / status bar would otherwise sit on top of the sheet.
+    useSafeArea: true,
+    // Cap at 90% so the parent route stays visible behind it.
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+    ),
+    // `showDragHandle: true` swallows drag-to-dismiss combined with the inner
+    // SingleChildScrollView; the handle is drawn inline instead.
+    builder: (_) => SubscriptionFormView(
+      cards: cards,
+      initial: initial,
+      onStatus: onStatus,
+    ),
   );
 
   @override
@@ -33,28 +64,53 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
   late final TextEditingController _name;
   late final TextEditingController _amount;
   late final TextEditingController _customDays;
+  late final TextEditingController _installments;
+  late final TextEditingController _owedBy;
+  late ChargeKind _kind;
   late BillingCycle _cycle;
+
+  /// Null while "Otro" is active; the count then lives in [_installments].
+  int? _term;
+  bool _customTerm = false;
   late DateTime _firstCharge;
   late String? _cardId;
   late int _reminder;
 
   bool get _isEdit => widget.initial != null;
+  bool get _isInstallment => _kind == ChargeKind.installment;
+
+  int? get _installmentCount =>
+      _customTerm ? int.tryParse(_installments.text) : _term;
 
   @override
   void initState() {
     super.initState();
     final SubscriptionModel? item = widget.initial;
     _name = TextEditingController(text: item?.name ?? '');
-    _amount = TextEditingController(
-      text: item == null ? '' : item.amount.toStringAsFixed(2),
-    );
+    _amount = TextEditingController(text: AmountFieldWidget.initialText(item));
     _customDays = TextEditingController(
       text: item?.customDays?.toString() ?? '',
     );
+    final int? count = item?.installmentsTotal;
+    _customTerm =
+        count != null && !InstallmentTermSelectorWidget.isPreset(count);
+    _term = _customTerm
+        ? null
+        : (count ?? InstallmentTermSelectorWidget.defaultTerm);
+    _installments = TextEditingController(
+      text: _customTerm ? count.toString() : '',
+    );
+    _owedBy = TextEditingController(text: item?.owedBy ?? '');
+    _kind = item?.kind ?? ChargeKind.subscription;
     _cycle = item?.cycle ?? BillingCycle.monthly;
     _firstCharge = item?.firstChargeDate ?? DateTime.now();
     _cardId = item?.cardId;
     _reminder = item?.reminderDaysBefore ?? 1;
+    // Live preview and installment breakdown both derive from these, so any
+    // change must rebuild.
+    _amount.addListener(_refresh);
+    _installments.addListener(_refresh);
+    _customDays.addListener(_refresh);
   }
 
   @override
@@ -62,12 +118,31 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
     _name.dispose();
     _amount.dispose();
     _customDays.dispose();
+    _installments.dispose();
+    _owedBy.dispose();
     super.dispose();
   }
 
+  void _refresh() => setState(() {});
+
+  /// The database only accepts a monthly installment plan, so switching kind
+  /// forces the cycle rather than letting the write fail on the constraint.
+  void _selectKind(ChargeKind kind) => setState(() {
+    _kind = kind;
+    if (kind == ChargeKind.installment) {
+      _cycle = BillingCycle.monthly;
+      _term ??= InstallmentTermSelectorWidget.defaultTerm;
+    }
+  });
+
+  void _selectTerm(int? months) => setState(() {
+    _customTerm = months == null;
+    _term = months;
+  });
+
   Future<void> _pickDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
+    final DateTime? picked = await CustomDatePicker.show(
+      context,
       initialDate: _firstCharge,
       // Past dates are the norm: most subscriptions started before the app did.
       firstDate: DateTime(2000),
@@ -78,20 +153,47 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
     }
   }
 
+  /// Cancelling asks first, then the sheet closes and the screen runs the
+  /// transition. Popping before the callback keeps the snackbar off the sheet.
+  Future<void> _changeStatus(SubscriptionStatus status) async {
+    if (status == SubscriptionStatus.cancelled &&
+        !await confirmCancelSubscription(context, widget.initial!.name)) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pop();
+    widget.onStatus?.call(status);
+  }
+
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    final String owedBy = _owedBy.text.trim();
+    final double typed = AmountFieldWidget.parse(_amount.text)!;
+    final int? count = _installmentCount;
+    if (_isInstallment && count == null) {
       return;
     }
     Navigator.of(context).pop(
       SubscriptionModel(
         id: widget.initial?.id ?? '',
         name: _name.text.trim(),
-        amount: double.parse(_amount.text.replaceAll(',', '.')),
+        // The field holds the price on a plan and the charge on everything
+        // else; the column always holds the charge.
+        amount: _isInstallment
+            ? MoneyHelper.installmentAmount(typed, count!)
+            : typed,
         cycle: _cycle,
         customDays: int.tryParse(_customDays.text),
         firstChargeDate: _firstCharge,
         cardId: _cardId,
         reminderDaysBefore: _reminder,
+        kind: _kind,
+        installmentsTotal: _isInstallment ? count : null,
+        owedBy: owedBy.isEmpty ? null : owedBy,
       ),
     );
   }
@@ -99,12 +201,24 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final String? breakdown = CommitmentSummary.breakdown(
+      total: AmountFieldWidget.parse(_amount.text),
+      count: _installmentCount,
+    );
+    final String? preview = CommitmentSummary.preview(
+      amount: AmountFieldWidget.parse(_amount.text),
+      cycle: _cycle,
+      customDays: _customDays.text,
+      firstCharge: _firstCharge,
+      isInstallment: _isInstallment,
+      installmentCount: _installmentCount,
+    );
 
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.screenPadding,
         right: AppSpacing.screenPadding,
-        top: AppSpacing.lg,
+        top: AppSpacing.xs,
         bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
       ),
       child: SingleChildScrollView(
@@ -114,176 +228,73 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _isEdit ? 'Editar suscripción' : 'Nueva suscripción',
-                style: theme.textTheme.titleLarge,
+              FormHeader(
+                isEdit: _isEdit,
+                onClose: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              FormChargeSection(
+                kind: _kind,
+                onKind: _selectKind,
+                name: _name,
+                amount: _amount,
+                autofocusName: !_isEdit,
+                term: _term,
+                isCustomTerm: _customTerm,
+                onTerm: _selectTerm,
+                installments: _installments,
+                breakdown: breakdown,
+                cycle: _cycle,
+                onCycle: (cycle) => setState(() => _cycle = cycle),
+                customDays: _customDays,
               ),
               const SizedBox(height: AppSpacing.lg),
-              TextFormField(
-                controller: _name,
-                autofocus: !_isEdit,
-                textCapitalization: TextCapitalization.words,
-                maxLength: 60,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                  hintText: 'Netflix',
-                ),
-                validator: (value) =>
-                    (value?.trim().isEmpty ?? true) ? 'Ponle un nombre.' : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextFormField(
-                controller: _amount,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                ],
-                decoration: const InputDecoration(
-                  labelText: 'Monto',
-                  prefixText: r'$ ',
-                ),
-                validator: _validateAmount,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _CycleSelector(
-                value: _cycle,
-                onChanged: (cycle) => setState(() => _cycle = cycle),
-              ),
-              if (_cycle == BillingCycle.custom) ...[
-                const SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _customDays,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(labelText: 'Cada X días'),
-                  validator: _validateCustomDays,
-                ),
-              ],
-              const SizedBox(height: AppSpacing.md),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Primer cobro'),
-                subtitle: Text(MoneyHelper.longDate(_firstCharge)),
-                trailing: const Icon(Icons.calendar_today_outlined),
+              FirstChargeRowWidget(
+                isInstallment: _isInstallment,
+                date: _firstCharge,
+                daysUntil: _firstCharge.difference(DateTime.now()).inDays,
                 onTap: _pickDate,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              _CardSelector(
+              const SizedBox(height: AppSpacing.lg),
+              Text('Tarjeta', style: theme.textTheme.labelLarge),
+              const SizedBox(height: AppSpacing.sm),
+              CardSelectorWidget(
                 cards: widget.cards,
                 value: _cardId,
                 onChanged: (id) => setState(() => _cardId = id),
+                archivedAlias: widget.initial?.cardArchived ?? false
+                    ? widget.initial!.cardAlias
+                    : null,
               ),
-              const SizedBox(height: AppSpacing.md),
-              _ReminderSelector(
-                value: _reminder,
-                onChanged: (days) => setState(() => _reminder = days),
+              const SizedBox(height: AppSpacing.sectionGap),
+              FormOptionalSection(
+                owedByController: _owedBy,
+                reminderDays: _reminder,
+                onReminderChanged: (days) => setState(() => _reminder = days),
               ),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
+              if (preview != null) ...[
+                Text(preview, style: theme.textTheme.bodySmall),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: Text(_isEdit ? 'Guardar' : 'Agregar suscripción'),
+                  child: Text(_isEdit ? 'Guardar' : 'Agregar'),
                 ),
               ),
+              if (_isEdit && widget.onStatus != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                SubscriptionStatusActionsWidget(
+                  status: widget.initial!.status,
+                  onStatus: _changeStatus,
+                ),
+              ],
             ],
           ),
         ),
       ),
-    );
-  }
-
-  String? _validateAmount(String? value) {
-    final double? amount = double.tryParse((value ?? '').replaceAll(',', '.'));
-    if (amount == null) {
-      return 'Escribe un monto.';
-    }
-    // Mirrors the subs_amount_pos constraint, so the error arrives before
-    // the round trip instead of after it.
-    return amount > 0 ? null : 'Debe ser mayor que cero.';
-  }
-
-  String? _validateCustomDays(String? value) {
-    final int? days = int.tryParse(value ?? '');
-    return (days != null && days >= 1 && days <= 365)
-        ? null
-        : 'Entre 1 y 365 días.';
-  }
-}
-
-class _CycleSelector extends StatelessWidget {
-  const _CycleSelector({required this.value, required this.onChanged});
-
-  final BillingCycle value;
-  final ValueChanged<BillingCycle> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.xs,
-      children: [
-        for (final BillingCycle cycle in BillingCycle.values)
-          ChoiceChip(
-            label: Text(cycle.label),
-            selected: cycle == value,
-            onSelected: (_) => onChanged(cycle),
-          ),
-      ],
-    );
-  }
-}
-
-class _CardSelector extends StatelessWidget {
-  const _CardSelector({
-    required this.cards,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final List<CardModel> cards;
-  final String? value;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String?>(
-      initialValue: value,
-      decoration: const InputDecoration(labelText: 'Tarjeta'),
-      items: [
-        const DropdownMenuItem<String?>(child: Text('Sin tarjeta')),
-        for (final CardModel card in cards)
-          DropdownMenuItem<String?>(value: card.id, child: Text(card.alias)),
-      ],
-      onChanged: onChanged,
-    );
-  }
-}
-
-class _ReminderSelector extends StatelessWidget {
-  const _ReminderSelector({required this.value, required this.onChanged});
-
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  static const Map<int, String> _options = {
-    0: 'El mismo día',
-    1: '1 día antes',
-    3: '3 días antes',
-    7: '7 días antes',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<int>(
-      initialValue: _options.containsKey(value) ? value : 1,
-      decoration: const InputDecoration(labelText: 'Avisarme'),
-      items: [
-        for (final MapEntry<int, String> option in _options.entries)
-          DropdownMenuItem<int>(value: option.key, child: Text(option.value)),
-      ],
-      onChanged: (days) => onChanged(days ?? 1),
     );
   }
 }

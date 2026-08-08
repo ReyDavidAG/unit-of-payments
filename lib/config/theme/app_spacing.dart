@@ -22,6 +22,7 @@ class AppSpacing {
   static const double radiusCard = 12;
   static const double radiusPill = 999;
 
-  /// Left bar that carries a card's swatch on a subscription row.
-  static const double swatchBar = 3;
+  /// The one width a card's swatch is ever drawn at: the left bar on every
+  /// card-bearing row, and the dot that stands in for it inside a chip.
+  static const double swatchBar = 6;
 }

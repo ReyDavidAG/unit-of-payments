@@ -15,11 +15,19 @@ class SubscriptionModel {
     this.reminderDaysBefore = 1,
     this.category,
     this.notes,
+    this.kind = ChargeKind.subscription,
+    this.status = SubscriptionStatus.active,
+    this.installmentsTotal,
+    this.owedBy,
     this.cardAlias,
     this.cardBrand,
     this.cardColor,
+    this.cardArchived = false,
     this.nextChargeDate,
     this.monthlyAmount,
+    this.installmentsPaid,
+    this.installmentsLeft,
+    this.outstanding = 0,
   });
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) =>
@@ -35,13 +43,21 @@ class SubscriptionModel {
         reminderDaysBefore: json['reminder_days_before'] as int? ?? 1,
         category: json['category'] as String?,
         notes: json['notes'] as String?,
+        kind: ChargeKind.fromValue(json['kind'] as String?),
+        status: SubscriptionStatus.fromValue(json['status'] as String?),
+        installmentsTotal: json['installments_total'] as int?,
+        owedBy: json['owed_by'] as String?,
         cardAlias: json['card_alias'] as String?,
         cardBrand: CardBrand.fromValue(json['card_brand'] as String?),
         cardColor: json['card_color'] as String?,
+        cardArchived: json['card_archived'] as bool? ?? false,
         nextChargeDate: _toDate(json['next_charge_date']),
         monthlyAmount: json['monthly_amount'] == null
             ? null
             : _toDouble(json['monthly_amount']),
+        installmentsPaid: json['installments_paid'] as int?,
+        installmentsLeft: json['installments_left'] as int?,
+        outstanding: _toDouble(json['outstanding']),
       );
 
   final String id;
@@ -55,13 +71,59 @@ class SubscriptionModel {
   final int reminderDaysBefore;
   final String? category;
   final String? notes;
+  final ChargeKind kind;
+
+  /// Running, on hold, or over. Cancelled rows never reach the client: the
+  /// view drops them.
+  final SubscriptionStatus status;
+
+  /// How many monthly charges the plan runs for. Null on open-ended
+  /// subscriptions, which is what the `subs_installments` constraint enforces.
+  final int? installmentsTotal;
+
+  /// Set when someone else repays this charge: a lent card, a shared plan.
+  final String? owedBy;
 
   // Joined and computed by the view. Never written back.
   final String? cardAlias;
   final CardBrand? cardBrand;
   final String? cardColor;
+
+  /// The card is gone from every picker but the charge still points at it, so
+  /// the row has to say so before the user wonders where the card went.
+  final bool cardArchived;
   final DateTime? nextChargeDate;
   final double? monthlyAmount;
+  final int? installmentsPaid;
+  final int? installmentsLeft;
+
+  /// What is still owed on an installment plan. Zero on a subscription, so
+  /// summing debt across a list is a plain sum.
+  final double outstanding;
+
+  bool get isInstallment => kind == ChargeKind.installment;
+
+  bool get isPaused => status == SubscriptionStatus.paused;
+
+  /// Contado: charged once and settled on the next statement. A plan of length
+  /// one, so the same trigger, progress maths and constraint cover it.
+  bool get isSingleCharge => isInstallment && installmentsTotal == 1;
+
+  /// True once the last charge has been taken. The view already hides settled
+  /// plans, so this only ever shows on a row read before it dropped out.
+  bool get isSettled => isInstallment && (installmentsLeft ?? 1) <= 0;
+
+  /// What the row says about itself where a subscription would name its cycle.
+  /// "Mensual" is true of an installment plan too, and useful on neither.
+  String get progressLabel {
+    if (isSingleCharge) {
+      return 'Contado';
+    }
+    if (isInstallment && installmentsPaid != null) {
+      return '${kind.shortLabel} $installmentsPaid de $installmentsTotal';
+    }
+    return cycle.label;
+  }
 
   /// Postgres returns numeric as a string to avoid losing precision in JSON.
   static double _toDouble(Object? value) => switch (value) {
@@ -91,6 +153,9 @@ class SubscriptionModel {
     'card_id': cardId,
     'category': category,
     'notes': notes,
+    'kind': kind.value,
+    'installments_total': isInstallment ? installmentsTotal : null,
+    'owed_by': owedBy,
   };
 
   /// Days until the next charge. Negative means it already passed today.
@@ -101,6 +166,44 @@ class SubscriptionModel {
           nextChargeDate!.month,
           nextChargeDate!.day,
         ).difference(DateTime(today.year, today.month, today.day)).inDays;
+}
+
+/// An open-ended subscription or a fixed-length installment plan. The database
+/// enforces that an installment is always monthly and always carries a count.
+enum ChargeKind {
+  subscription('subscription', 'Suscripción', 'Suscripción'),
+  installment('installment', 'Meses sin intereses', 'MSI');
+
+  const ChargeKind(this.value, this.label, this.shortLabel);
+
+  final String value;
+  final String label;
+
+  /// For list rows, where the full label would push the card alias off screen.
+  final String shortLabel;
+
+  static ChargeKind fromValue(String? value) => values.firstWhere(
+    (kind) => kind.value == value,
+    orElse: () => ChargeKind.subscription,
+  );
+}
+
+/// Running, on hold, or over. Three states, one column: a boolean could say
+/// "gone" but never "paused, I'll resume it", and two booleans can disagree.
+enum SubscriptionStatus {
+  active('active', 'Activa'),
+  paused('paused', 'Pausada'),
+  cancelled('cancelled', 'Cancelada');
+
+  const SubscriptionStatus(this.value, this.label);
+
+  final String value;
+  final String label;
+
+  static SubscriptionStatus fromValue(String? value) => values.firstWhere(
+    (status) => status.value == value,
+    orElse: () => SubscriptionStatus.active,
+  );
 }
 
 enum BillingCycle {
