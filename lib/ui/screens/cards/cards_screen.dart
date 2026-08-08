@@ -6,8 +6,10 @@ import '../../../data/models/cards/card_model.dart';
 import '../../../data/providers/cards/cards_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/cards/card_form_view.dart';
+import '../../widgets/cards/card_tile_skeleton.dart';
 import '../../widgets/cards/card_tile_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/motion/motion.dart';
 
 class CardsScreen extends ConsumerWidget {
   const CardsScreen({super.key});
@@ -97,7 +99,13 @@ class CardsScreen extends ConsumerWidget {
               child: const Icon(Icons.add),
             ),
       body: cards.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListView.separated(
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          itemCount: 5,
+          separatorBuilder: (_, _) =>
+              const SizedBox(height: AppSpacing.listGap),
+          itemBuilder: (_, _) => const CardTileSkeleton(),
+        ),
         error: (error, _) => EmptyStateWidget(
           message: SupabaseService.describeError(error),
           actionLabel: 'Reintentar',
@@ -116,10 +124,13 @@ class CardsScreen extends ConsumerWidget {
                 itemCount: items.length,
                 separatorBuilder: (_, _) =>
                     const SizedBox(height: AppSpacing.listGap),
-                itemBuilder: (_, index) => CardTileWidget(
-                  card: items[index],
-                  onTap: () => _edit(context, ref, items[index]),
-                  onArchive: () => _archive(context, ref, items[index]),
+                itemBuilder: (_, index) => AnimatedListItem(
+                  index: index,
+                  child: CardTileWidget(
+                    card: items[index],
+                    onTap: () => _edit(context, ref, items[index]),
+                    onArchive: () => _archive(context, ref, items[index]),
+                  ),
                 ),
               ),
       ),

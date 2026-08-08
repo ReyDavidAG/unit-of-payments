@@ -11,7 +11,9 @@ import '../../../data/providers/dashboard/dashboard_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../profile/profile_screen.dart';
+import '../../widgets/common/motion/motion.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
+import '../../widgets/dashboard/dashboard_skeleton.dart';
 import '../../widgets/dashboard/spend_split_widget.dart';
 import '../../widgets/dashboard/upcoming_charge_widget.dart';
 
@@ -44,29 +46,37 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref
-            ..invalidate(subscriptionsProvider)
-            ..invalidate(cardTotalsProvider)
-            ..invalidate(upcomingProvider);
-          await ref.read(cardTotalsProvider.future);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          children: [
-            const _MonthlyTotal(),
-            ...switch (totals) {
-              AsyncError(:final error) => [
-                _Message(SupabaseService.describeError(error)),
-              ],
-              AsyncLoading() => const [
-                Center(child: CircularProgressIndicator()),
-              ],
-              _ => _breakdown(totals.value ?? const [], uncarded, today),
-            },
-            ..._upcoming(upcoming.value ?? const [], today),
-          ],
+      body: totals.when(
+        loading: () => const DashboardSkeleton(),
+        error: (error, _) => RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(subscriptionsProvider)
+              ..invalidate(cardTotalsProvider)
+              ..invalidate(upcomingProvider);
+            await ref.read(cardTotalsProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            children: [_Message(SupabaseService.describeError(error))],
+          ),
+        ),
+        data: (_) => RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(subscriptionsProvider)
+              ..invalidate(cardTotalsProvider)
+              ..invalidate(upcomingProvider);
+            await ref.read(cardTotalsProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            children: [
+              const AnimatedHero(child: _MonthlyTotal()),
+              ..._breakdown(totals.value ?? const [], uncarded, today),
+              ..._upcoming(upcoming.value ?? const [], today),
+            ],
+          ),
         ),
       ),
     );
@@ -96,8 +106,11 @@ class DashboardScreen extends ConsumerWidget {
       if (rows.length >= 2) const SizedBox(height: AppSpacing.lg),
       const _SectionLabel('POR TARJETA'),
       const SizedBox(height: AppSpacing.sm),
-      for (final CardTotalModel total in rows) ...[
-        CardTotalWidget(total: total, today: today),
+      for (var i = 0; i < rows.length; i++) ...[
+        AnimatedListItem(
+          index: i,
+          child: CardTotalWidget(total: rows[i], today: today),
+        ),
         const SizedBox(height: AppSpacing.listGap),
       ],
     ];
@@ -120,8 +133,14 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.cardPadding),
           child: Column(
             children: [
-              for (final SubscriptionModel item in dated)
-                UpcomingChargeWidget(subscription: item, today: today),
+              for (var i = 0; i < dated.length; i++)
+                AnimatedListItem(
+                  index: i,
+                  child: UpcomingChargeWidget(
+                    subscription: dated[i],
+                    today: today,
+                  ),
+                ),
               const Divider(height: AppSpacing.lg),
               _Total(sum),
             ],

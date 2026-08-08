@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../widgets/auth/auth_form_widget.dart';
+import '../../widgets/common/motion/motion.dart';
 import 'sign_in_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -46,12 +47,21 @@ class SignUpScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.xl2),
-              Text('Crear cuenta', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Seis caracteres como mínimo. Nada más.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              AnimatedHero(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Crear cuenta', style: theme.textTheme.headlineLarge),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Seis caracteres como mínimo. Nada más.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
