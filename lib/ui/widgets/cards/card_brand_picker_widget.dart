@@ -56,6 +56,11 @@ class _BrandTile extends StatelessWidget {
   static const double _width = 60;
   static const double _height = 38;
 
+  // Concentric corners: the ring sits `xs2` away from the artwork, so its
+  // radius has to be the artwork's radius plus that gap or the curves fight.
+  static const double _gap = AppSpacing.xs2;
+  static const double _artRadius = AppSpacing.xs2;
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -64,21 +69,22 @@ class _BrandTile extends StatelessWidget {
       label: brand.label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+        borderRadius: BorderRadius.circular(_artRadius + _gap),
         child: Container(
-          width: _width,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          padding: const EdgeInsets.all(_gap),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+            borderRadius: BorderRadius.circular(_artRadius + _gap),
+            // Always drawn, only ever tinted: a border that appears on
+            // selection would resize the tile and shove the row sideways.
             border: Border.all(
               color: selected ? outline : Colors.transparent,
-              width: selected ? AppSpacing.xs3 : 0,
+              width: AppSpacing.xs3,
             ),
           ),
           child: Column(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppSpacing.xs2),
+                borderRadius: BorderRadius.circular(_artRadius),
                 child: Image.asset(
                   CardAssets.webp(brand),
                   width: _width,
@@ -87,12 +93,15 @@ class _BrandTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xs2),
-              Text(
-                brand.label,
-                style: Theme.of(context).textTheme.bodySmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+              SizedBox(
+                width: _width,
+                child: Text(
+                  brand.label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),

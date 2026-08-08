@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../core/helpers/card_brand_helper.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../widgets/cards/card_brand_picker_widget.dart';
 import '../../widgets/cards/card_swatch_picker_widget.dart';
@@ -34,6 +35,11 @@ class _CardFormViewState extends State<CardFormView> {
   // Kept so the DB column is still populated, but no UI surfaces it.
   late String _color;
 
+  /// The brand follows the alias until the user overrides it by tapping a
+  /// tile, or until an existing card arrives with a brand worth keeping.
+  late bool _brandLocked;
+  bool _brandSuggested = false;
+
   bool get _isEdit => widget.initial != null;
 
   @override
@@ -45,7 +51,32 @@ class _CardFormViewState extends State<CardFormView> {
     _cutoff = TextEditingController(text: card?.cutoffDay?.toString() ?? '');
     _brand = card?.brand ?? CardBrand.other;
     _color = card?.color ?? AppColors.hexOf(AppColors.defaultSwatch);
+    _brandLocked = card != null && card.brand != CardBrand.other;
+    _alias.addListener(_suggestBrand);
   }
+
+  /// Re-runs on every keystroke, so deleting the name that triggered a guess
+  /// takes the guess with it.
+  void _suggestBrand() {
+    if (_brandLocked) {
+      return;
+    }
+    final CardBrand next =
+        CardBrandHelper.detect(_alias.text) ?? CardBrand.other;
+    if (next == _brand) {
+      return;
+    }
+    setState(() {
+      _brand = next;
+      _brandSuggested = next != CardBrand.other;
+    });
+  }
+
+  void _selectBrand(CardBrand brand) => setState(() {
+    _brand = brand;
+    _brandLocked = true;
+    _brandSuggested = false;
+  });
 
   @override
   void dispose() {
@@ -108,10 +139,14 @@ class _CardFormViewState extends State<CardFormView> {
               const SizedBox(height: AppSpacing.md),
               Text('Marca', style: theme.textTheme.labelLarge),
               const SizedBox(height: AppSpacing.sm),
-              CardBrandPickerWidget(
-                selected: _brand,
-                onSelected: (brand) => setState(() => _brand = brand),
-              ),
+              CardBrandPickerWidget(selected: _brand, onSelected: _selectBrand),
+              if (_brandSuggested) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'La detectamos por el nombre. Tócala para cambiarla.',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               Text('Color', style: theme.textTheme.labelLarge),
               const SizedBox(height: AppSpacing.sm),
