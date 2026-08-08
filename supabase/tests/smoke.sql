@@ -22,6 +22,8 @@ declare
   v_due    date;
   v_bad    boolean;
   v_count  int;
+  v_cash   uuid;
+  v_arch   boolean;
 begin
   select id into v_user from auth.users limit 1;
   if v_user is null then
@@ -100,6 +102,49 @@ begin
     v_bad := false;
   end;
   assert not v_bad, 'notif_target_xor accepted a notice with both a card and a subscription';
+
+  -- Contado is a one-payment plan, so it settles on the day it is charged and
+  -- the trigger has nothing left to add.
+  insert into public.subscriptions
+    (user_id, card_id, name, amount, cycle, first_charge_date, kind, installments_total)
+  values (v_user, v_card, '__smoke_cash__', 500, 'monthly', current_date, 'installment', 1)
+  returning id into v_cash;
+
+  select ends_on into v_end from public.subscriptions where id = v_cash;
+  assert v_end = current_date, format('contado ends_on = %s, want today', v_end);
+
+  select installments_paid, installments_left, outstanding
+    into v_paid, v_left, v_out
+    from public.v_subscriptions where id = v_cash;
+  assert v_paid = 1,   format('contado paid = %s, want 1', v_paid);
+  assert v_left = 0,   format('contado left = %s, want 0', v_left);
+  assert v_out  = 0,   format('contado outstanding = %s, want 0', v_out);
+
+  -- Pausing keeps the row on the list but takes it out of every total, which
+  -- is the whole difference between pausing and cancelling.
+  update public.subscriptions set status = 'paused' where id = v_sub;
+
+  select count(*) into v_count from public.v_subscriptions where id = v_sub;
+  assert v_count = 1, 'a paused charge must stay visible so it can be resumed';
+
+  select count(*) into v_count from public.v_upcoming where id = v_sub;
+  assert v_count = 0, 'a paused charge must not be scheduled';
+
+  select count(*) into v_count from public.v_debtors where owed_by = '__smoke_juan__';
+  assert v_count = 0, 'a paused charge must not count as debt someone owes';
+
+  select total_due into v_total from public.v_card_statement where card_id = v_card;
+  assert v_total = 500, format('paused charge still on the statement: total_due = %s, want 500', v_total);
+
+  update public.subscriptions set status = 'cancelled' where id = v_sub;
+  select count(*) into v_count from public.v_subscriptions where id = v_sub;
+  assert v_count = 0, 'a cancelled charge must leave the list';
+
+  -- Archiving the card leaves the charge pointing at it, and the view has to
+  -- say so — that flag is the only warning the list can draw.
+  update public.cards set archived = true where id = v_card;
+  select card_archived into v_arch from public.v_subscriptions where id = v_cash;
+  assert v_arch, 'card_archived must be true once the card is archived';
 
   raise exception 'SMOKE OK -- all assertions passed, rolling back';
 end $$;
