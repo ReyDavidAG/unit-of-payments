@@ -27,6 +27,15 @@ class AppColors {
   static const Color primary = Color(0xFFB8763B);
   static const Color onPrimary = paper;
 
+  // Tab-indicator colours — distinct chromatic identity per destination.
+  // Resumen uses the same blue in both modes so the active tab reads
+  // the same regardless of theme. Tarjetas uses the cascade's
+  // aubergine so the active tab borrows from the brand mark. Suscripciones
+  // and Avisos reuse the semantic success and critical hues.
+  static const Color tabBlue = Color(0xFF4A8AAC); // Resumen, both modes
+  static const Color tabPurple = Color(0xFF5B2C6F); // Tarjetas, light
+  static const Color tabPurpleDark = Color(0xFF7B3D9E); // Tarjetas, dark
+
   // Semantic palette — used sparingly inside the app to communicate
   // state: charge timing, sync status, urgency. Four hues inspired by
   // the Hallmark Bubble example (green / blue / amber / pink), each

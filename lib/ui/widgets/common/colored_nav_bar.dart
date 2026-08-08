@@ -10,10 +10,10 @@ import '../../../config/theme/app_spacing.dart';
 /// one they're on without reading the label.
 ///
 /// The colour mapping is fixed:
-///   0  Resumen       — primary (teal)
+///   0  Resumen       — tabBlue (the same blue in both modes)
 ///   1  Suscripciones — success (green)
-///   2  Tarjetas      — info (blue)
-///   3  Avisos        — warning (amber)
+///   2  Tarjetas      — tabPurple / tabPurpleDark (cascade aubergine)
+///   3  Avisos        — critical (pink, alerts)
 ///
 /// Dark mode keeps the same hues lifted to clear 4.5:1 against paperDark.
 class ColoredNavBar extends StatelessWidget {
@@ -35,6 +35,11 @@ class ColoredNavBar extends StatelessWidget {
     final Color unselectedColor = isDark
         ? AppColors.mutedDark
         : AppColors.muted;
+    final Color selectedLabelColor = isDark
+        ? theme.scaffoldBackgroundColor == AppColors.paperDark
+              ? AppColors.inkDark
+              : AppColors.ink
+        : AppColors.ink;
 
     return Container(
       decoration: BoxDecoration(
@@ -46,7 +51,7 @@ class ColoredNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: AppSpacing.xl3,
+          height: AppSpacing.xl2,
           child: Row(
             children: [
               for (int i = 0; i < items.length; i++)
@@ -55,6 +60,7 @@ class ColoredNavBar extends StatelessWidget {
                     item: items[i],
                     selected: i == currentIndex,
                     color: _colorFor(i, isDark),
+                    selectedLabelColor: selectedLabelColor,
                     unselectedColor: unselectedColor,
                     onTap: () => onTap(i),
                   ),
@@ -71,17 +77,17 @@ class ColoredNavBar extends StatelessWidget {
   static Color _colorFor(int index, bool isDark) {
     if (isDark) {
       return switch (index) {
-        0 => AppColors.primaryDark,
+        0 => AppColors.tabBlue,
         1 => AppColors.successDark,
-        2 => AppColors.infoDark,
-        _ => AppColors.warningDark,
+        2 => AppColors.tabPurpleDark,
+        _ => AppColors.criticalDark,
       };
     }
     return switch (index) {
-      0 => AppColors.primary,
+      0 => AppColors.tabBlue,
       1 => AppColors.success,
-      2 => AppColors.info,
-      _ => AppColors.warning,
+      2 => AppColors.tabPurple,
+      _ => AppColors.critical,
     };
   }
 }
@@ -103,6 +109,7 @@ class _NavDestination extends StatelessWidget {
     required this.item,
     required this.selected,
     required this.color,
+    required this.selectedLabelColor,
     required this.unselectedColor,
     required this.onTap,
   });
@@ -110,12 +117,12 @@ class _NavDestination extends StatelessWidget {
   final NavBarItem item;
   final bool selected;
   final Color color;
+  final Color selectedLabelColor;
   final Color unselectedColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final Color tint = selected ? color : unselectedColor;
     return InkWell(
       onTap: onTap,
       child: Semantics(
@@ -125,32 +132,42 @@ class _NavDestination extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Solid coloured chip behind the icon, paper-coloured icon
+            // inside. Smaller than the default NavigationBar pill and
+            // sharper corners (radiusInput, not radiusPill).
             AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              height: 32,
-              width: 64,
+              height: 28,
+              width: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected
-                    ? color.withValues(alpha: 0.15)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                color: selected ? color : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
               ),
               child: Icon(
                 selected ? item.selectedIcon : item.icon,
-                size: 24,
-                color: tint,
+                size: 20,
+                // Icon on the chip is paper (white-ish); off-chip it is
+                // the muted neutral so the unselected tabs recede.
+                color: selected
+                    ? AppColors.paper
+                    : unselectedColor,
               ),
             ),
             const SizedBox(height: AppSpacing.xs2),
             Text(
               item.label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: tint,
                 letterSpacing: 0.1,
+                // Selected label takes the ink colour so it reads on the
+                // solid chip's coloured halo; off-chip, the muted
+                // neutral keeps the unselected tabs quiet.
+                color: selected
+                    ? selectedLabelColor
+                    : unselectedColor,
               ),
             ),
           ],
