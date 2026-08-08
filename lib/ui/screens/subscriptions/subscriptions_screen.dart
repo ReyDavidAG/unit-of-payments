@@ -50,6 +50,7 @@ class SubscriptionsScreen extends ConsumerWidget {
       context,
       cards: cards,
       initial: existing,
+      onStatus: (status) => _changeStatus(messenger, ref, existing, status),
     );
     if (item == null) {
       return;
@@ -57,6 +58,48 @@ class SubscriptionsScreen extends ConsumerWidget {
     await _run(
       messenger,
       () => ref.read(subscriptionsProvider.notifier).edit(item),
+    );
+  }
+
+  /// Cancelling is confirmed inside the sheet and is not undoable from here.
+  /// Pausing is one tap either way, so it offers the undo instead of a dialog.
+  Future<void> _changeStatus(
+    ScaffoldMessengerState messenger,
+    WidgetRef ref,
+    SubscriptionModel item,
+    SubscriptionStatus status,
+  ) async {
+    final SubscriptionsNotifier notifier = ref.read(
+      subscriptionsProvider.notifier,
+    );
+    final bool cancelling = status == SubscriptionStatus.cancelled;
+    final bool ok = await _run(
+      messenger,
+      () =>
+          cancelling ? notifier.cancel(item) : notifier.setStatus(item, status),
+    );
+    if (!ok) {
+      return;
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(switch (status) {
+          SubscriptionStatus.paused => '${item.name} en pausa',
+          SubscriptionStatus.active => '${item.name} reanudada',
+          SubscriptionStatus.cancelled => '${item.name} cancelada',
+        }),
+        action: cancelling
+            ? null
+            : SnackBarAction(
+                label: 'Deshacer',
+                // Through _run: the snackbar outlives this screen, so an undo
+                // that fails must surface rather than throw into the void.
+                onPressed: () => _run(
+                  messenger,
+                  () => notifier.setStatus(item, item.status),
+                ),
+              ),
+      ),
     );
   }
 

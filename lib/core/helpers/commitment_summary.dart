@@ -40,7 +40,10 @@ class CommitmentSummary {
       if (installmentCount == null) {
         return null;
       }
-      return '${MoneyHelper.amount(amount)} al mes · $installmentCount pagos · desde $start';
+      // Contado is one charge, so "al mes" and "desde" would both be wrong.
+      return installmentCount == 1
+          ? '${MoneyHelper.amount(amount)} · pago único · $start'
+          : '${MoneyHelper.amount(amount)} al mes · $installmentCount pagos · desde $start';
     }
     final String cadence = switch (cycle) {
       BillingCycle.weekly => 'cada semana',

@@ -35,9 +35,21 @@ class InstallmentTermSelectorWidget extends StatelessWidget {
   /// What the promotion resolves to, once both numbers are real.
   final String? breakdown;
 
+  /// Paid once, settled on the next statement. A plan of length one, so it
+  /// needs no separate kind, trigger or progress maths — only its own chip,
+  /// because "1 MSI" is not a thing anybody says.
+  static const int contado = 1;
+
   static const List<int> terms = [3, 6, 9, 12, 18, 24];
 
-  /// Mirrors subs_installments, so the error arrives before the round trip.
+  /// Far and away the most common promotion, so it costs the user no taps.
+  static const int defaultTerm = 12;
+
+  /// A count that has its own chip, so the free-text field stays closed.
+  static bool isPreset(int count) => count == contado || terms.contains(count);
+
+  /// Mirrors subs_installments. Contado has a chip, so a count typed by hand
+  /// is always a real term.
   static String? validate(String? value) {
     final int? count = int.tryParse(value ?? '');
     return (count != null && count >= 2 && count <= 60)
@@ -57,6 +69,15 @@ class InstallmentTermSelectorWidget extends StatelessWidget {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
+            // First, and with its own glyph: it is the one option here that
+            // does not spread the charge over months.
+            _PromoChip(
+              icon: Icons.bolt_outlined,
+              label: 'Contado',
+              selected: !isCustom && term == contado,
+              theme: theme,
+              onSelected: () => onTerm(contado),
+            ),
             for (final int months in terms)
               _PromoChip(
                 icon: Icons.credit_card_outlined,
@@ -129,28 +150,22 @@ class _PromoChip extends StatelessWidget {
       avatar: Icon(
         icon,
         size: 18,
-        color: selected
-            ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurfaceVariant,
+        color: selected ? theme.info : theme.colorScheme.onSurfaceVariant,
       ),
       label: Text(label),
       selected: selected,
       showCheckmark: false,
       onSelected: (_) => onSelected(),
-      selectedColor: theme.info,
+      // A solid info fill left the label at 3.55:1 in light mode, and no token
+      // cleared 4.5 on top of it. The 15% wash is the grammar every other chip
+      // and segment already speaks; info instead of primary keeps the MSI lane.
+      selectedColor: theme.info.withValues(alpha: 0.15),
       backgroundColor: theme.colorScheme.surface,
-      labelStyle: TextStyle(
-        fontFamily: 'Geist',
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        height: 1.4,
-        color: selected
-            ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurface,
+      labelStyle: (theme.textTheme.labelLarge ?? const TextStyle()).copyWith(
+        color: theme.colorScheme.onSurface,
       ),
       side: BorderSide(
-        color: selected ? Colors.transparent : theme.colorScheme.outlineVariant,
-        width: AppSpacing.xs3,
+        color: selected ? theme.info : theme.colorScheme.outlineVariant,
       ),
       visualDensity: VisualDensity.compact,
     );

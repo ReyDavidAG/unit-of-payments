@@ -17,15 +17,10 @@ class SubscriptionKindSelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // No visualDensity or shrinkWrap here: together they collapsed the theme's
+    // 48 dp minimum to a measured 32, under both platform floors.
     return SegmentedButton<ChargeKind>(
       showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: WidgetStateProperty.all(
-          Theme.of(context).textTheme.labelLarge,
-        ),
-      ),
       segments: [
         for (final ChargeKind kind in ChargeKind.values)
           ButtonSegment<ChargeKind>(value: kind, label: Text(kind.label)),

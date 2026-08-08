@@ -5,28 +5,38 @@ import '../../../core/helpers/commitment_summary.dart';
 import '../../../core/helpers/money_helper.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
+import '../../widgets/common/custom_date_picker.dart';
 import '../../widgets/subscriptions/amount_field_widget.dart';
-import '../../widgets/subscriptions/billing_cycle_selector_widget.dart';
 import '../../widgets/subscriptions/card_selector_widget.dart';
 import '../../widgets/subscriptions/first_charge_row_widget.dart';
-import '../../widgets/common/custom_date_picker.dart';
 import '../../widgets/subscriptions/installment_term_selector_widget.dart';
-import '../../widgets/subscriptions/subscription_kind_selector_widget.dart';
+import '../../widgets/subscriptions/subscription_status_actions_widget.dart';
+import 'form_charge_section.dart';
 import 'form_header.dart';
 import 'form_optional_section.dart';
 
 /// Create or edit a subscription or an installment plan. Returns the built
 /// model, or null when dismissed. Persisting is the caller's job.
 class SubscriptionFormView extends StatefulWidget {
-  const SubscriptionFormView({required this.cards, this.initial, super.key});
+  const SubscriptionFormView({
+    required this.cards,
+    this.initial,
+    this.onStatus,
+    super.key,
+  });
 
   final List<CardModel> cards;
   final SubscriptionModel? initial;
+
+  /// Pause, resume or cancel. The sheet closes first and hands the transition
+  /// back: the screen owns the notifier and the snackbar, not this view.
+  final ValueChanged<SubscriptionStatus>? onStatus;
 
   static Future<SubscriptionModel?> show(
     BuildContext context, {
     required List<CardModel> cards,
     SubscriptionModel? initial,
+    ValueChanged<SubscriptionStatus>? onStatus,
   }) => showModalBottomSheet<SubscriptionModel>(
     context: context,
     isScrollControlled: true,
@@ -38,7 +48,11 @@ class SubscriptionFormView extends StatefulWidget {
     ),
     // `showDragHandle: true` swallows drag-to-dismiss combined with the inner
     // SingleChildScrollView; the handle is drawn inline instead.
-    builder: (_) => SubscriptionFormView(cards: cards, initial: initial),
+    builder: (_) => SubscriptionFormView(
+      cards: cards,
+      initial: initial,
+      onStatus: onStatus,
+    ),
   );
 
   @override
@@ -65,37 +79,24 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
   bool get _isEdit => widget.initial != null;
   bool get _isInstallment => _kind == ChargeKind.installment;
 
-  /// Far and away the most common promotion, so it costs the user no taps.
-  static const int _defaultTerm = 12;
-
   int? get _installmentCount =>
       _customTerm ? int.tryParse(_installments.text) : _term;
-
-  static String _initialAmount(SubscriptionModel? item) {
-    if (item == null) {
-      return '';
-    }
-    final int? count = item.installmentsTotal;
-    return item.kind == ChargeKind.installment && count != null
-        ? (item.amount * count).toStringAsFixed(2)
-        : item.amount.toStringAsFixed(2);
-  }
 
   @override
   void initState() {
     super.initState();
     final SubscriptionModel? item = widget.initial;
     _name = TextEditingController(text: item?.name ?? '');
-    _amount = TextEditingController(text: _initialAmount(item));
+    _amount = TextEditingController(text: AmountFieldWidget.initialText(item));
     _customDays = TextEditingController(
       text: item?.customDays?.toString() ?? '',
     );
-    // The stored amount is the monthly charge, but the user thinks in the price
-    // they paid, so an existing plan is read back out to its total.
     final int? count = item?.installmentsTotal;
     _customTerm =
-        count != null && !InstallmentTermSelectorWidget.terms.contains(count);
-    _term = _customTerm ? null : (count ?? _defaultTerm);
+        count != null && !InstallmentTermSelectorWidget.isPreset(count);
+    _term = _customTerm
+        ? null
+        : (count ?? InstallmentTermSelectorWidget.defaultTerm);
     _installments = TextEditingController(
       text: _customTerm ? count.toString() : '',
     );
@@ -130,7 +131,7 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
     _kind = kind;
     if (kind == ChargeKind.installment) {
       _cycle = BillingCycle.monthly;
-      _term ??= _defaultTerm;
+      _term ??= InstallmentTermSelectorWidget.defaultTerm;
     }
   });
 
@@ -150,6 +151,20 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
     if (picked != null) {
       setState(() => _firstCharge = picked);
     }
+  }
+
+  /// Cancelling asks first, then the sheet closes and the screen runs the
+  /// transition. Popping before the callback keeps the snackbar off the sheet.
+  Future<void> _changeStatus(SubscriptionStatus status) async {
+    if (status == SubscriptionStatus.cancelled &&
+        !await confirmCancelSubscription(context, widget.initial!.name)) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pop();
+    widget.onStatus?.call(status);
   }
 
   void _submit() {
@@ -218,46 +233,21 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
                 onClose: () => Navigator.of(context).pop(),
               ),
               const SizedBox(height: AppSpacing.md),
-              SubscriptionKindSelectorWidget(
-                value: _kind,
-                onChanged: _selectKind,
+              FormChargeSection(
+                kind: _kind,
+                onKind: _selectKind,
+                name: _name,
+                amount: _amount,
+                autofocusName: !_isEdit,
+                term: _term,
+                isCustomTerm: _customTerm,
+                onTerm: _selectTerm,
+                installments: _installments,
+                breakdown: breakdown,
+                cycle: _cycle,
+                onCycle: (cycle) => setState(() => _cycle = cycle),
+                customDays: _customDays,
               ),
-              const SizedBox(height: AppSpacing.sectionGap),
-              TextFormField(
-                controller: _name,
-                autofocus: !_isEdit,
-                textCapitalization: TextCapitalization.words,
-                maxLength: 60,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  hintText: _isInstallment ? 'Refrigerador' : 'Netflix',
-                ),
-                validator: (value) =>
-                    (value?.trim().isEmpty ?? true) ? 'Ponle un nombre.' : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AmountFieldWidget(
-                controller: _amount,
-                label: _isInstallment ? 'Monto total' : 'Monto',
-                display: true,
-              ),
-              if (_isInstallment) ...[
-                const SizedBox(height: AppSpacing.md),
-                InstallmentTermSelectorWidget(
-                  term: _term,
-                  isCustom: _customTerm,
-                  onTerm: _selectTerm,
-                  controller: _installments,
-                  breakdown: breakdown,
-                ),
-              ] else ...[
-                const SizedBox(height: AppSpacing.md),
-                BillingCycleSelectorWidget(
-                  value: _cycle,
-                  onChanged: (cycle) => setState(() => _cycle = cycle),
-                  controller: _customDays,
-                ),
-              ],
               const SizedBox(height: AppSpacing.lg),
               FirstChargeRowWidget(
                 isInstallment: _isInstallment,
@@ -272,6 +262,9 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
                 cards: widget.cards,
                 value: _cardId,
                 onChanged: (id) => setState(() => _cardId = id),
+                archivedAlias: widget.initial?.cardArchived ?? false
+                    ? widget.initial!.cardAlias
+                    : null,
               ),
               const SizedBox(height: AppSpacing.sectionGap),
               FormOptionalSection(
@@ -291,6 +284,13 @@ class _SubscriptionFormViewState extends State<SubscriptionFormView> {
                   child: Text(_isEdit ? 'Guardar' : 'Agregar'),
                 ),
               ),
+              if (_isEdit && widget.onStatus != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                SubscriptionStatusActionsWidget(
+                  status: widget.initial!.status,
+                  onStatus: _changeStatus,
+                ),
+              ],
             ],
           ),
         ),

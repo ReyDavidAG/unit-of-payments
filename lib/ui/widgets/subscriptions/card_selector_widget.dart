@@ -17,6 +17,7 @@ class CardSelectorWidget extends StatelessWidget {
     required this.cards,
     required this.value,
     required this.onChanged,
+    this.archivedAlias,
     super.key,
   });
 
@@ -24,17 +25,36 @@ class CardSelectorWidget extends StatelessWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
 
+  /// The charge is on a card that has been archived. Archived cards are not in
+  /// [cards], so without this the row would show nothing selected and quietly
+  /// lose the answer to "where is this being charged".
+  final String? archivedAlias;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool orphaned =
+        archivedAlias != null && !cards.any((card) => card.id == value);
+
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
+        if (orphaned)
+          _CardChip(
+            label: '$archivedAlias · archivada',
+            swatch: null,
+            selected: true,
+            warning: true,
+            theme: theme,
+            // Not selectable: it is where the charge is, not somewhere it can
+            // be put. Picking any other chip is what moves it.
+            onTap: () {},
+          ),
         _CardChip(
           label: 'Sin tarjeta',
           swatch: null,
-          selected: value == null,
+          selected: !orphaned && value == null,
           theme: theme,
           onTap: () => onChanged(null),
         ),
@@ -58,6 +78,7 @@ class _CardChip extends StatelessWidget {
     required this.selected,
     required this.theme,
     required this.onTap,
+    this.warning = false,
   });
 
   final String label;
@@ -65,6 +86,7 @@ class _CardChip extends StatelessWidget {
   final bool selected;
   final ThemeData theme;
   final VoidCallback onTap;
+  final bool warning;
 
   /// Without a swatch we fall back to ink (light) or inkDark (dark) so the
   /// chip still reads as "selected" against the surrounding paper.
@@ -109,9 +131,11 @@ class _CardChip extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
               ],
               Icon(
-                swatch == null
-                    ? Icons.do_not_disturb_on_outlined
-                    : Icons.credit_card_outlined,
+                switch ((warning, swatch)) {
+                  (true, _) => Icons.warning_amber_rounded,
+                  (_, null) => Icons.do_not_disturb_on_outlined,
+                  _ => Icons.credit_card_outlined,
+                },
                 size: 16,
                 color: selected
                     ? theme.colorScheme.surface
@@ -120,15 +144,12 @@ class _CardChip extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs2),
               Text(
                 label,
-                style: TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                  color: selected
-                      ? theme.colorScheme.surface
-                      : theme.colorScheme.onSurface,
-                ),
+                style: (theme.textTheme.labelLarge ?? const TextStyle())
+                    .copyWith(
+                      color: selected
+                          ? theme.colorScheme.surface
+                          : theme.colorScheme.onSurface,
+                    ),
               ),
             ],
           ),

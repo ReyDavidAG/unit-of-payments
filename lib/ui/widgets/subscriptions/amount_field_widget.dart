@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
+import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// A money input. Accepts a comma or a dot as the decimal mark, because both
 /// keyboards ship one and neither user is wrong.
@@ -34,6 +35,18 @@ class AmountFieldWidget extends StatelessWidget {
   /// The one place that reads a typed figure back as a number.
   static double? parse(String value) =>
       double.tryParse(value.replaceAll(',', '.'));
+
+  /// The stored amount is the monthly charge, but the user thinks in the price
+  /// they paid, so an existing plan is read back out to its total.
+  static String initialText(SubscriptionModel? item) {
+    if (item == null) {
+      return '';
+    }
+    final int? count = item.installmentsTotal;
+    return item.isInstallment && count != null
+        ? (item.amount * count).toStringAsFixed(2)
+        : item.amount.toStringAsFixed(2);
+  }
 
   OutlineInputBorder _border(Color color, {required bool focused}) =>
       OutlineInputBorder(
