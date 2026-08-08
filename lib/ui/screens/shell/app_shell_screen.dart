@@ -21,6 +21,11 @@ class AppShellScreen extends StatelessWidget {
         ),
         destinations: const [
           NavigationDestination(
+            icon: Icon(Icons.pie_chart_outline),
+            selectedIcon: Icon(Icons.pie_chart),
+            label: 'Resumen',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'Suscripciones',

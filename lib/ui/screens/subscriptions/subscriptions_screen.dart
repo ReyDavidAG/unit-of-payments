@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_spacing.dart';
-import '../../../config/theme/app_typography.dart';
-import '../../../core/helpers/money_helper.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 import '../../../data/providers/cards/cards_provider.dart';
@@ -17,7 +15,7 @@ class SubscriptionsScreen extends ConsumerWidget {
   const SubscriptionsScreen({super.key});
 
   static const String routeName = 'subscriptions';
-  static const String routePath = '/';
+  static const String routePath = '/subscriptions';
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
@@ -113,43 +111,15 @@ class SubscriptionsScreen extends ConsumerWidget {
               )
             : ListView.separated(
                 padding: const EdgeInsets.all(AppSpacing.screenPadding),
-                itemCount: items.length + 1,
+                itemCount: items.length,
                 separatorBuilder: (_, _) =>
                     const SizedBox(height: AppSpacing.listGap),
-                itemBuilder: (_, index) => index == 0
-                    ? const _MonthlyTotal()
-                    : SubscriptionTileWidget(
-                        subscription: items[index - 1],
-                        today: today,
-                        onTap: () => _edit(context, ref, items[index - 1]),
-                      ),
+                itemBuilder: (_, index) => SubscriptionTileWidget(
+                  subscription: items[index],
+                  today: today,
+                  onTap: () => _edit(context, ref, items[index]),
+                ),
               ),
-      ),
-    );
-  }
-}
-
-/// The one number the app exists to show.
-class _MonthlyTotal extends ConsumerWidget {
-  const _MonthlyTotal();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ThemeData theme = Theme.of(context);
-    final double total = ref.watch(monthlyTotalProvider);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('AL MES', style: theme.textTheme.labelSmall),
-          const SizedBox(height: AppSpacing.xs2),
-          Text(
-            MoneyHelper.amount(total),
-            style: AppTypography.displayAmount(theme.colorScheme.onSurface),
-          ),
-        ],
       ),
     );
   }
