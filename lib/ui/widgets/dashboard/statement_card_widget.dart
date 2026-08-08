@@ -5,6 +5,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
 import '../../../data/models/cards/card_statement_model.dart';
+import '../common/swatch_card_widget.dart';
 
 /// One card's open statement: what closes, when it has to be paid, and how much
 /// of it someone else is repaying.
@@ -27,70 +28,50 @@ class StatementCardWidget extends StatelessWidget {
         ? null
         : AppColors.urgency(days, isDark: isDark);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: AppSpacing.swatchBar,
-              color: AppColors.swatchFromHex(statement.color),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            statement.alias,
-                            style: theme.textTheme.bodyLarge,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: AppSpacing.xs3),
-                          Text(
-                            _deadline(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: urgency,
-                              fontWeight: urgency == null
-                                  ? null
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          MoneyHelper.amount(statement.totalDue),
-                          style: AppTypography.amount(
-                            theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        if (statement.isShared) ...[
-                          const SizedBox(height: AppSpacing.xs3),
-                          Text(
-                            'Tuyo ${MoneyHelper.amount(statement.yours)}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+    return SwatchCardWidget(
+      swatch: AppColors.swatchFromHex(statement.color),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  statement.alias,
+                  style: theme.textTheme.bodyLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
+                const SizedBox(height: AppSpacing.xs3),
+                Text(
+                  _deadline(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: urgency,
+                    fontWeight: urgency == null ? null : FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                MoneyHelper.amount(statement.totalDue),
+                style: AppTypography.amount(theme.colorScheme.onSurface),
+              ),
+              if (statement.isShared) ...[
+                const SizedBox(height: AppSpacing.xs3),
+                Text(
+                  'Tuyo ${MoneyHelper.amount(statement.yours)}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }
