@@ -309,6 +309,41 @@ creó y devuelve las filas de todos los usuarios.
 - `set_updated_at` en `subscriptions` — `before update`, pone `updated_at = now()`.
 - `handle_new_user` en `auth.users` — `after insert`, crea el `profiles` correspondiente.
   Va con `security definer` y `search_path = ''` (si no, es un vector de escalada de privilegios).
+- `set_installment_end` en `subscriptions` — `before insert or update`, deriva
+  `ends_on = first_charge_date + (installments_total - 1) meses` cuando `kind = 'installment'`.
+  Es lo que hace que un MSI **se apague solo** al saldarse: `v_subscriptions` ya filtra por `ends_on`.
+
+### 4.5 MSI y estado de cuenta
+
+| Función | Devuelve |
+|---|---|
+| `installments_paid(first, total, on)` | Mensualidades ya cobradas, tope en `total` |
+| `cutoff_on(day, in_month)` | El día de corte acotado al mes: 31 en febrero es 28 |
+| `statement_close(day, from)` | El corte que cierra en o después de `from` |
+| `payment_due_after(due_day, close)` | El primer día límite estrictamente posterior al corte |
+| `charge_dates_between(first, cycle, custom, from, to)` | Las fechas de cobro **reales** en una ventana |
+
+`charge_dates_between` existe porque `monthly_amount()` **no sirve** para un estado de cuenta:
+normaliza semanal y anual a un promedio comparable, y aquí hace falta saber cuántos cobros caen de
+verdad entre dos fechas. Repite la aritmética `n * step` desde la fecha original en vez de sumar
+sobre el resultado anterior — el mismo error de arrastre en fin de mes que evita `next_charge_date`.
+
+| Vista | Contesta |
+|---|---|
+| `v_debtors` | Cuánto te debe cada persona y en cuántos pagos |
+| `v_card_statement` | Ventana abierta por tarjeta, fecha límite, total a pagar y cuánto te reembolsan |
+
+`v_card_totals` gana `outstanding_total` (deuda MSI pendiente), `installment_count` y
+`monthly_owed_by_others`. `v_subscriptions` gana `installments_paid`, `installments_left` y
+`outstanding` — cero en las suscripciones abiertas, para que sumar deuda por tarjeta sea una suma.
+
+Las cinco funciones toman `int`, no `smallint`: Postgres no reduce `integer` a `smallint` al
+resolver una llamada, así que un `smallint` las volvía invocables solo desde columnas.
+
+Verificación en `supabase/tests/`: `checks.sql` afirma sobre las funciones puras, `smoke.sql`
+inserta filas reales, comprueba trigger, vistas y el XOR de avisos, y revierte con un `raise`.
+Sus expectativas son relativas a `current_date` — fijar fechas literales hacía que el archivo
+pasara hoy y se rompiera solo en dos semanas.
 
 ---
 
