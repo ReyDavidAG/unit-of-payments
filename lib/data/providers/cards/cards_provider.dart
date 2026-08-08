@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards/card_model.dart';
 import '../../services/cards/card_service.dart';
 import '../auth/auth_provider.dart';
+import '../subscriptions/subscriptions_provider.dart';
 
 final AsyncNotifierProvider<CardsNotifier, List<CardModel>> cardsProvider =
     AsyncNotifierProvider<CardsNotifier, List<CardModel>>(CardsNotifier.new);
@@ -43,6 +44,7 @@ class CardsNotifier extends AsyncNotifier<List<CardModel>> {
     ]);
     try {
       await CardService.setArchived(card.id, archived: true);
+      _refreshCharges();
     } on Object {
       state = AsyncData(previous);
       rethrow;
@@ -52,7 +54,17 @@ class CardsNotifier extends AsyncNotifier<List<CardModel>> {
   Future<void> restore(CardModel card) async {
     await CardService.setArchived(card.id, archived: false);
     state = AsyncData([...?state.value, card]..sort(_byAlias));
+    _refreshCharges();
   }
+
+  /// `card_archived` is computed by the view, so every charge has to be re-read
+  /// for its warning to appear — and to disappear again on undo.
+  ///
+  /// It lives here and not in the screen because it is a consequence of the
+  /// write, not of the tap. A `WidgetRef` captured in an undo callback is dead
+  /// the moment its widget is: this `ref` belongs to the provider and outlives
+  /// any screen that triggered it.
+  void _refreshCharges() => ref.invalidate(subscriptionsProvider);
 
   static int _byAlias(CardModel a, CardModel b) =>
       a.alias.toLowerCase().compareTo(b.alias.toLowerCase());

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_motion.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/providers/shell_index_provider.dart';
+import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/notifications/local_notification_service.dart';
 import '../../widgets/common/colored_nav_bar.dart';
 import '../cards/cards_screen.dart';
@@ -78,6 +79,9 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
   Widget build(BuildContext context) {
     ref.watch(notificationSyncProvider);
     final int currentIndex = ref.watch(shellIndexProvider);
+    // A charge left on an archived card is only visible on the Suscripciones
+    // tab, so the tab itself has to say there is something to look at.
+    final bool orphaned = ref.watch(orphanedCardCountProvider) > 0;
 
     // PopScope on the shell: pressing the system back while inside the
     // authenticated shell asks before quitting the app. The dialog is
@@ -104,8 +108,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
         bottomNavigationBar: ColoredNavBar(
           currentIndex: currentIndex,
           onTap: _onTabTapped,
-          items: const [
-            NavBarItem(
+          items: [
+            const NavBarItem(
               icon: Icons.pie_chart_outline,
               selectedIcon: Icons.pie_chart,
               label: 'Resumen',
@@ -114,13 +118,14 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
               icon: Icons.receipt_long_outlined,
               selectedIcon: Icons.receipt_long,
               label: 'Suscripciones',
+              warning: orphaned,
             ),
-            NavBarItem(
+            const NavBarItem(
               icon: Icons.credit_card_outlined,
               selectedIcon: Icons.credit_card,
               label: 'Tarjetas',
             ),
-            NavBarItem(
+            const NavBarItem(
               icon: Icons.notifications_none,
               selectedIcon: Icons.notifications,
               label: 'Avisos',
