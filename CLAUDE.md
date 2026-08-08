@@ -20,6 +20,7 @@ Work is done **feature by feature**, one branch per feature (`feature/<name>`).
 ```bash
 flutter pub get                              # install dependencies
 flutter run --dart-define-from-file=.env     # run on a device/emulator
+flutter test                                 # unit + widget tests
 ./scripts/format.sh                          # dart format + flutter analyze  <-- run at the end of EVERY change
 ```
 
@@ -52,7 +53,7 @@ lib/
     widgets/<feature>/   # reusable widgets, grouped by feature
     widgets/common/      # widgets shared across features
   assets/
-    images/ icons/
+    fonts/ icon/ cards/
 ```
 
 Group by **feature**, not by type, inside each layer. A new feature `subscriptions` creates

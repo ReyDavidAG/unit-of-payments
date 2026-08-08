@@ -354,14 +354,15 @@ Siguiendo [CLAUDE.md](CLAUDE.md):
 ```
 lib/
   config/router/app_router.dart
-  config/theme/app_theme.dart, app_colors.dart
-  core/constants/environment.dart          # SUPABASE_URL, SUPABASE_ANON_KEY
-  core/helpers/date_helper.dart, currency_helper.dart
-  data/models/cards/card_model.dart
+  config/theme/                             # colors, typography, spacing, motion, theme, mode enum
+  core/constants/environment.dart           # SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
+  core/helpers/money_helper.dart            # moneda y etiquetas de fecha, en uno
+  data/models/cards/card_model.dart, card_total_model.dart, card_assets.dart
   data/models/subscriptions/subscription_model.dart
   data/models/notifications/notification_log_model.dart
+  data/models/profile/profile_model.dart
   data/services/supabase/supabase_service.dart
-  data/services/notifications/local_notification_service.dart
+  data/services/notifications/local_notification_service.dart, notification_scheduler.dart
   data/providers/<feature>/
   ui/screens/<feature>/, ui/views/<feature>/, ui/widgets/<feature>/
 ```
@@ -373,11 +374,15 @@ una sola implementación es la abstracción que CLAUDE.md prohíbe.
 
 | Paquete | Para qué | Estado |
 |---|---|---|
-| `supabase_flutter` | cliente + auth + sesión persistida | ✅ instalado |
-| `go_router` | rutas + guard de sesión | ✅ instalado |
-| `flutter_riverpod` | estado compartido | ✅ instalado |
-| `flutter_local_notifications` + `timezone` | recordatorios | pendiente, fase 7 |
-| `intl` | formato de moneda y fechas | pendiente, fase 6 |
+| `supabase_flutter` | cliente + auth + sesión persistida | ✅ |
+| `go_router` | rutas + guard de sesión | ✅ |
+| `flutter_riverpod` | estado compartido | ✅ |
+| `flutter_local_notifications` + `timezone` | recordatorios locales | ✅ |
+| `intl` + `flutter_localizations` | formato de moneda, fechas y strings de Material en es-MX | ✅ |
+| `shared_preferences` | persistir el modo de tema sin sesión ni red | ✅ |
+| `animate_do` | entradas fade-up / fade-down envueltas en `ui/widgets/common/motion/` | ✅ |
+| `shimmer` | skeletons de carga | ✅ |
+| `flutter_launcher_icons` + `flutter_native_splash` (dev) | icono y splash generados desde un PNG | ✅ |
 
 Sin `flutter_dotenv`: `--dart-define-from-file` es nativo del SDK y acepta formato `.env`. El
 paquete además empaquetaría el archivo como asset legible dentro del APK; `String.fromEnvironment`
@@ -401,9 +406,15 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 | 7 | `feature/notifications` | Programación local + `notification_log` ✅ |
 | 8 | `feature/notification-history` | Pantalla de historial ✅ |
 | 9 | `feature/profile` | Preferencias de moneda y zona horaria, cambiar y recuperar contraseña ✅ |
+| 10 | `feature/theme-mode` | Selector claro / oscuro / sistema con persistencia local, paleta oscura Wayfare ✅ |
+| 11 | `feature/animations` | Envoltorios de movimiento, skeletons por pantalla, shell con swipe entre tabs ✅ |
+| 12 | `feature/app-icon-and-splash` | Icono, splash, marca Vence, WebPs de marca de tarjeta, identidad cromática por tab ✅ |
 
 Las fases 1 y 2 no tocan Dart. La 3 no se empieza hasta que la 1 esté probada: si el esquema cambia
 después, se rehace el cliente.
+
+Lo único abierto es la fase 2: los secrets `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` no están
+configurados en GitHub, así que el workflow de keep-alive nunca ha corrido.
 
 ---
 
