@@ -99,6 +99,11 @@ class _Details extends StatelessWidget {
       subscription.cycle.label,
       if (subscription.cardAlias != null) subscription.cardAlias!,
     ].join(' · ');
+    // Meta line carries the brand tint at 80% opacity — a hint of the card's
+    // colour without filling the row. Reads as muted when no card is set.
+    final Color? brandTint = subscription.cardBrand == null
+        ? null
+        : CardAssets.accent(subscription.cardBrand!).withValues(alpha: 0.8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +115,10 @@ class _Details extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSpacing.xs3),
-        Text(meta, style: theme.textTheme.bodySmall),
+        Text(
+          meta,
+          style: theme.textTheme.bodySmall?.copyWith(color: brandTint),
+        ),
       ],
     );
   }

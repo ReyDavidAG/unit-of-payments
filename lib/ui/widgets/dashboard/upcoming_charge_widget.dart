@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
+import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// A charge due soon. Denser than the subscriptions list on purpose: this is a
@@ -32,9 +32,11 @@ class UpcomingChargeWidget extends StatelessWidget {
             width: AppSpacing.xs,
             height: AppSpacing.xs,
             decoration: BoxDecoration(
-              color: subscription.cardId == null
+              // Brand accent on the dot: the row's tiny identifier. Falls
+              // back to outline when the subscription has no card attached.
+              color: subscription.cardBrand == null
                   ? theme.colorScheme.outline
-                  : AppColors.swatchFromHex(subscription.cardColor),
+                  : CardAssets.accent(subscription.cardBrand!),
               shape: BoxShape.circle,
             ),
           ),
