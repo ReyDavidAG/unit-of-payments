@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Generic card mark">
+  <title>Other card</title>
+  <!-- Card body: warm amber, our established hero color. -->
+  <rect width="640" height="400" rx="28" fill="#C19A3F"/>
+
+  <!-- Chip: gold-toned, upper-left. -->
+  <g transform="translate(48, 60)">
+    <rect width="64" height="50" rx="6" fill="#8B6A2E"/>
+    <line x1="0" y1="14" x2="64" y2="14" stroke="#C19A3F" stroke-width="1.5"/>
+    <line x1="0" y1="36" x2="64" y2="36" stroke="#C19A3F" stroke-width="1.5"/>
+    <line x1="32" y1="0" x2="32" y2="50" stroke="#C19A3F" stroke-width="1.5"/>
+  </g>
+
+  <!-- Ink mark: the "next-due" indicator we used in the cascade hero.
+       Carried forward so the generic card still reads as ours. -->
+  <rect x="568" y="100" width="6" height="200" rx="3" fill="#1C1411" fill-opacity="0.4"/>
+</svg>
