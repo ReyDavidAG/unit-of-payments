@@ -152,11 +152,13 @@ appears without its alias in text beside it.** Colour is never the only carrier 
 
 ### Card brand marks
 
-Brand colours are external identity, not palette. They live in
-[card_assets.dart](lib/data/models/cards/card_assets.dart) and are the only literal colours in the app
-outside `app_colors.dart`, because Visa navy is Visa's number and not ours to re-tune.
+A brand reaches the UI **only as its bundled artwork**, never as a colour value.
+[card_assets.dart](lib/data/models/cards/card_assets.dart) maps a brand to its WebP and nothing else;
+there are no literal colours in the app outside `app_colors.dart`.
 
-`Visa #1A1F71 · Mastercard #EB001B · Amex #006FCF · Otra #C19A3F`
+Brand colours are external identity, not palette. They were never ours to re-tune, which is exactly
+why they could not be trusted on this paper: Visa navy measured **1.33:1** and Mastercard red
+**2.14:1** on `surfaceDark`. Which of *your* cards a row belongs to is the swatch's job.
 
 ### Measured contrast
 
@@ -283,15 +285,52 @@ isn't a real loading indicator. If you can't say what a transition communicates,
 
 ## 6. Component voice
 
+- **The swatch bar** — a card's colour is drawn at **exactly one width, `swatchBar` (6)**, on every
+  surface that shows a card: the subscription row, the card row, the summary total, the statement, and
+  as a dot of the same diameter in the upcoming list and inside a card chip. One widget owns it —
+  [swatch_card_widget.dart](lib/ui/widgets/common/swatch_card_widget.dart) — so the width cannot drift
+  again. It ran 3 px in two places, 6 in a third and a brand navy in a fourth, and the same card read
+  as four different things.
+
+  It is always the **card's own swatch**, never its brand colour. Brand navy and brand red are external
+  identity, they are not in this palette, and on the dark paper they measured 1.33 and 2.14. Meta lines
+  are plain `muted` for the same reason: colour identity is the bar's job, and the bar can never be
+  unreadable. A charge with no card gets `rule`, not a colour.
+
+  A hard edge against the card fill, never a filled tile — the swatches are saturated and a filled row
+  would compete with the amount. Full height via `IntrinsicHeight`, so a row that wraps to two lines
+  does not leave a gap.
 - **Subscription row** — name in `bodyLarge`, next charge in `bodySmall` `muted`, amount right-aligned
-  in Geist Mono. The card colour is a 3 px left bar, never a filled tile.
-- **Card total** — alias in `titleMedium`, monthly total in `displayAmount`. The swatch is a small
-  square beside the alias, not a background.
+  in Geist Mono, swatch bar on the edge.
+- **Card row and card total** — the same bar, plus the swatch as a 2 px ring around the brand art
+  ([card_brand_thumbnail.dart](lib/ui/widgets/cards/card_brand_thumbnail.dart)). The ring is what makes
+  the colour legible at thumbnail scale: the WebP fills its frame, so without it the swatch would only
+  exist on the far edge. Brand and swatch answer two different questions — which network processes it,
+  and which of *your* cards this is. Resumen is a view of the cards on Tarjetas, so it identifies them
+  identically rather than inventing a second language.
+- **Charge status** — three states, one column. **Active** is the default voice. **Paused** keeps the
+  row on the list and drops everything that claims attention: the bar goes to `rule`, the name and
+  amount to `onSurfaceVariant`, and `En pausa` replaces the countdown — an amber *"en 4 días"* on a
+  stopped charge is a lie. **Cancelled** leaves the list entirely. Pausing offers an undo snackbar;
+  cancelling asks in a dialog first, because there is no row left to undo from.
+- **Warning badge** — an amber disc with an ink `!` and an ink hairline ring, on the row *and* on the
+  tab. The ring is not decoration: the amber measures **1.79:1** on the light paper and has no
+  silhouette without it. The glyph is not decoration either — colour alone cannot carry a warning.
+  Used for exactly one thing today: a charge left on an archived card.
 - **Installment form** — the user is asked for the **price and the term**, because that is how the
   promotion is sold and how they remember it. The monthly charge is computed and shown back
   (`12 pagos de $833.33`), never typed. The term is a set of chips with an `Otro` escape, matching how
   the custom billing cycle already works — nobody should type `12` into a field for the one number
   that only ever takes a handful of values.
+- **Contado** — the first chip in the term row, with its own glyph, because it is the one option there
+  that does *not* spread the charge over months. `1 MSI` is not a phrase anybody says. Underneath it is
+  an installment plan of length one, so it reuses the same trigger, the same progress maths and the
+  same constraint; the row reads `Contado`, never `MSI 1 de 1`, and the amount field drops the word
+  *total* since nothing is being split.
+- **Term chips** — `info` at 15% with an `info` outline and an `onSurface` label. A solid `info` fill
+  left the label at **3.55:1** in light mode and no token in the system cleared 4.5 on top of it. The
+  15% wash is the grammar chips and segments already speak; `info` instead of `primary` is what keeps
+  the MSI lane distinct.
 - **Installment row** — the same subscription row, with the cycle position replaced by progress:
   `MSI 3 de 12 · BBVA`. *"Mensual"* is true of an installment plan and useless on it. The peso figure
   still owed is **not** here — it belongs to the card total and the statement, where it can be summed.
@@ -303,7 +342,14 @@ isn't a real loading indicator. If you can't say what a transition communicates,
 - **Primary button** — `primary` fill, `paper` label, Geist 500, `radiusCard`, full width on forms only.
 - **Secondary button** — `primary` 1 px outline, `primary` label, transparent fill.
 - **Destructive** — `danger` text on transparent, never a filled red button. Confirm with an undo
-  snackbar where the action is reversible, a dialog only where it is not.
+  snackbar where the action is reversible, a dialog only where it is not — or where the consequence
+  is invisible from where the button is. Archiving a card is reversible and still asks, because the
+  charges it strands are on another screen.
+- **Confirm dialog** — one widget owns every "are you sure":
+  [confirm_dialog.dart](lib/ui/widgets/common/confirm_dialog.dart). Dismissing counts as no. The
+  confirm button stays in the default primary voice unless the action is destructive; an app where
+  every dialog is red teaches the user to ignore red. On destructive dialogs the label is paired per
+  mode — the light cream measures **3.81:1** on `dangerDark` and cannot be used in both.
 - **Empty state** — one sentence in `bodyLarge` `muted` and one button. No illustration, no icon balloon.
 - **Error state** — the same shape, with the button reading `Reintentar`. It scrolls, so pull-to-refresh
   keeps working while it is on screen, and it never shows a code, a stack trace or a raw driver
