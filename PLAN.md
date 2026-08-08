@@ -113,7 +113,7 @@ create table public.subscriptions (
   ends_on             date,                    -- derived by trigger for installments
   reminder_days_before smallint not null default 1,
   category            text,
-  active              boolean not null default true,
+  status              public.subscription_status not null default 'active',
   notes               text,
   kind                public.charge_kind not null default 'subscription',
   installments_total  smallint,                -- 12 = "12 MSI"
@@ -130,7 +130,7 @@ create table public.subscriptions (
   ),
   constraint subs_ends_after  check (ends_on is null or ends_on >= first_charge_date),
   constraint subs_installments check (
-    (kind = 'installment' and installments_total between 2 and 60 and cycle = 'monthly') or
+    (kind = 'installment' and installments_total between 1 and 60 and cycle = 'monthly') or
     (kind = 'subscription' and installments_total is null)
   ),
   constraint subs_owed_by_len check (owed_by is null or char_length(owed_by) between 1 and 40)
@@ -141,6 +141,27 @@ create table public.subscriptions (
 
 `subs_custom_days` es la regla que impide el estado imposible "ciclo mensual con 45 días de período".
 Esa clase de validación vive acá, no en Dart.
+
+#### Tres estados, una columna
+
+`status` reemplazó al `active boolean` original. Un booleano podía decir "corriendo" o "se fue", nunca
+"pausada, la retomo". Y dos booleanos se contradicen entre sí, así que la columna es un enum:
+
+| | Aparece en la lista | Cuenta en totales, avisos y estado de cuenta |
+|---|---|---|
+| `active` | sí | sí |
+| `paused` | sí — hay que poder retomarla | no |
+| `cancelled` | no | no |
+
+`v_subscriptions` filtra solo `cancelled` y expone `status`; `v_card_totals`, `v_upcoming`, `v_debtors`
+y `v_card_statement` filtran a `active`. El historial de avisos nunca se borra: apunta a filas que
+siguen existiendo.
+
+#### Contado = un plan de un pago
+
+`installments_total` baja su mínimo de 2 a 1. Un pago de contado es un MSI de longitud uno: el mismo
+trigger le pone `ends_on = first_charge_date`, `installments_paid` devuelve 1 el día del cargo, y la
+fila se apaga sola al saldarse. Cero código nuevo, cero ramas nuevas.
 
 #### Los MSI viven en esta tabla, no en una propia
 
@@ -272,13 +293,17 @@ select s.*,
        c.alias  as card_alias,
        c.brand  as card_brand,
        c.color  as card_color,
+       coalesce(c.archived, false) as card_archived,
        public.next_charge_date(s.first_charge_date, s.cycle, s.custom_days) as next_charge_date,
        public.monthly_amount(s.amount, s.cycle, s.custom_days)              as monthly_amount
 from public.subscriptions s
 left join public.cards c on c.id = s.card_id
-where s.active
+where s.status <> 'cancelled'
   and (s.ends_on is null or s.ends_on >= current_date);
 ```
+
+`card_archived` viaja en la vista porque la tarjeta ya no está en ningún selector, pero el cargo
+que la apunta sí sigue en la lista, y es él quien tiene que avisar.
 
 ```sql
 -- "¿Cuánto pago por cada tarjeta?"
@@ -288,10 +313,13 @@ select c.id as card_id, c.alias, c.brand, c.color,
        coalesce(sum(v.monthly_amount), 0) as monthly_total,
        min(v.next_charge_date)        as next_charge_date
 from public.cards c
-left join public.v_subscriptions v on v.card_id = c.id
+left join public.v_subscriptions v on v.card_id = c.id and v.status = 'active'
 where not c.archived
 group by c.id;
 ```
+
+El filtro de `status` va en el join y no en el `where`: una tarjeta con todos sus cargos pausados
+sigue perteneciendo al resumen, leyendo cero.
 
 ```sql
 -- Cobros de los próximos 30 días, para la pantalla principal
