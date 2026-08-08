@@ -150,9 +150,7 @@ class _NavDestination extends StatelessWidget {
                 size: 20,
                 // Icon on the chip is paper (white-ish); off-chip it is
                 // the muted neutral so the unselected tabs recede.
-                color: selected
-                    ? AppColors.paper
-                    : unselectedColor,
+                color: selected ? AppColors.paper : unselectedColor,
               ),
             ),
             const SizedBox(height: AppSpacing.xs2),
@@ -165,9 +163,7 @@ class _NavDestination extends StatelessWidget {
                 // Selected label takes the ink colour so it reads on the
                 // solid chip's coloured halo; off-chip, the muted
                 // neutral keeps the unselected tabs quiet.
-                color: selected
-                    ? selectedLabelColor
-                    : unselectedColor,
+                color: selected ? selectedLabelColor : unselectedColor,
               ),
             ),
           ],

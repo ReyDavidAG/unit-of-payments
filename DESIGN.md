@@ -1,18 +1,22 @@
 # DESIGN.md
 
-Locked design system for **Vence** (package name `unit_of_payments`). Every screen, view and
-widget reads from these tokens. Code rules are in [CLAUDE.md](CLAUDE.md); this file governs how it
-looks.
+Locked design system for **Vence** (package `unit_of_payments`). Every screen, view and widget reads
+from these tokens. Code rules are in [CLAUDE.md](CLAUDE.md); this file governs how it looks.
 
 ```
-Hallmark · genre: modern-minimal · theme: Coral · scope: system (mobile app)
-pre-emit critique: P5 H4 E5 S5 R5 V4
+Hallmark · genre: modern-minimal · scope: system (mobile app)
+theme: Hum (light) + Manifesto-dark (dark) · anchor hue 70-82 warm
+pre-emit critique: P5 H4 E4 S5 R3 V4
 ```
 
-**Scope note.** Hallmark's macrostructure, nav and footer archetypes are page constructs for the web.
-This is a mobile app, so those picks are skipped on purpose. What carries over is everything that
-actually decides whether the UI looks made or generated: the token system, the type discipline, the
-motion budget and the anti-pattern list.
+**This document records what is implemented, not what was once planned.** It was re-derived from
+`lib/config/theme/` on 2026-08-08, and every contrast number below is computed from the shipping hex
+values, not estimated. Section 10 lists where the implementation knowingly departs from the rules
+above it.
+
+**Scope note.** Hallmark's macrostructure, nav and footer archetypes are page constructs for the web
+and are skipped on purpose. What carries over is what decides whether the UI looks made or generated:
+the token system, the type discipline, the motion budget and the anti-pattern list.
 
 ---
 
@@ -24,153 +28,207 @@ motion budget and the anti-pattern list.
 | **Use case** | Answer "what am I paying, and what hits next" — everything else is secondary |
 | **Tone** | Utilitarian, warm. Calm about money. Not a bank, not a toy |
 | **Genre** | modern-minimal — restraint with conviction |
-| **Theme** | Coral — warm-grey paper, one coral accent, Geist throughout |
+| **Theme** | Warm cream paper, terracotta identity, Geist throughout |
 
-These were inferred, not asked. If the tone is wrong, say so and the palette moves with it.
+These were inferred, not asked.
 
 ---
 
 ## 2. Colour
 
-OKLCH is the source of truth; the hex is the derived sRGB the Flutter code ships. Anchor hue **40**
-(warm), accent hue **32** (coral). Every neutral carries a trace of the anchor — a warm accent over
-cool greys is the mismatch nobody can name but everybody sees.
+OKLCH is the source of truth; hex is the derived sRGB that Flutter ships. Both modes anchor warm —
+light on hue **67–82**, dark on **55–82**. Every neutral carries a trace of the anchor: a warm accent
+over cool greys is the mismatch nobody can name but everybody sees.
+
+The two modes are **not** inversions of each other. Light is Hallmark's Hum palette — baked
+bread-crust terracotta on cream. Dark is Wayfare's `Manifesto-dark` — near-black warm paper with a
+bleed-red accent. They share a temperature, not a hue.
 
 ### Light
 
 | Token | OKLCH | Hex | Use |
 |---|---|---|---|
-| `paper` | `oklch(97% 0.008 40)` | `#FAF3F1` | Screen background |
-| `surface` | `oklch(94.5% 0.010 40)` | `#F3EBE8` | Cards, sheets |
-| `surface2` | `oklch(91% 0.012 40)` | `#E9DFDB` | Pressed / hovered surface |
-| `rule` | `oklch(87% 0.011 40)` | `#DBD2CF` | Decorative dividers only |
-| `neutral` | `oklch(58% 0.012 40)` | `#817875` | Control borders, icons, large text |
-| `muted` | `oklch(44% 0.013 40)` | `#59504D` | Secondary text |
-| `ink` | `oklch(20% 0.014 40)` | `#1C1411` | Primary text, filled buttons |
-| `accent` | `oklch(62% 0.17 32)` | `#D9553F` | Marks and fills — never small text |
-| `accentInk` | `oklch(37% 0.12 32)` | `#721E10` | Accent-coloured **text** |
-| `focus` | `oklch(55% 0.19 32)` | `#C8331A` | Focus ring |
-| `danger` | `oklch(52% 0.19 18)` | `#BD1F3D` | Destructive actions only |
+| `paper` | `oklch(96.8% 0.010 82)` | `#F8F4ED` | Screen background |
+| `surface` | `oklch(94.2% 0.014 78)` | `#F1EBE2` | Cards, sheets, input fill |
+| `surface2` | `oklch(90.3% 0.023 72)` | `#E9DDCF` | Pressed / splash / disabled fill |
+| `rule` | `oklch(86.8% 0.025 77)` | `#DDD2C2` | Dividers, `outlineVariant` |
+| `neutral` | `oklch(60.0% 0.023 67)` | `#8A7E72` | Control borders, icons, hints |
+| `muted` | `oklch(49.9% 0.020 67)` | `#6B6157` | Secondary text |
+| `ink` | `oklch(21.8% 0.000 90)` | `#1A1A1A` | Primary text, snackbar, tooltip |
+| `accent` | `oklch(62.4% 0.111 60)` | `#B8763B` | `colorScheme.secondary` |
+| `accentInk` | `oklch(39.9% 0.085 50)` | `#6B3818` | Accent-coloured **text** |
+| `focus` | `oklch(62.4% 0.111 60)` | `#B8763B` | `focusColor` |
+| `primary` | `oklch(62.4% 0.111 60)` | `#B8763B` | Buttons, FAB, focused input border |
+| `danger` | `oklch(51.9% 0.190 18)` | `#BD1F3D` | Destructive actions only |
+
+`accent`, `focus` and `primary` are the same terracotta on purpose — one chromatic identity, not three
+competing ones. `ink` is the one deliberately achromatic token in the system: pure neutral so text
+never tints.
 
 ### Dark
 
-Its own palette, not an inverted light one. Taken from Hallmark's Wayfare
-example (`Manifesto-dark`): warm anchor at hue 60, ink drifting to 80, and a
-bleed-red accent at 25 in place of the light theme's coral.
-
-| Token | OKLCH | Hex |
-|---|---|---|
-| `paper` | `oklch(13% 0.010 60)` | `#0A0704` |
-| `surface` | `oklch(18% 0.012 60)` | `#16100C` |
-| `surface2` | `oklch(24% 0.014 60)` | `#241E19` |
-| `rule` | `oklch(28% 0.012 60)` | `#2D2823` |
-| `neutral` | `oklch(62% 0.014 70)` | `#8C857D` |
-| `muted` | `oklch(80% 0.012 80)` | `#C2BDB5` |
-| `ink` | `oklch(96% 0.010 80)` | `#F5F1EA` |
-| `accent` | `oklch(66% 0.225 25)` | `#FE4145` |
-| `accentInk` | `oklch(80% 0.110 25)` | `#FDA19A` |
-| `focus` | `oklch(78% 0.165 70)` | `#F9A216` |
-| `danger` | `oklch(62% 0.255 350)` | `#EA0C9B` |
-
-Chroma is clamped to what sRGB can hold. The source is CSS `oklch`, which a
-browser gamut-maps on the fly; Flutter ships literal ARGB, so the values here
-are the highest in-gamut chroma at each lightness rather than the source
-numbers.
-
-**Danger is magenta in dark mode, red in light.** The dark accent *is* red, and
-a destructive action in a second red is one nobody can tell apart from an
-attention marker. Measured separation against the accent: ΔE 15.2 normal,
-14.2 deuteran.
-
-Elevation still goes lighter, never darker.
-
-### Measured contrast
-
-Computed, not estimated. WCAG 2.1 ratios against `paper`:
-
-| Pair | Light | Dark | Floor |
+| Token | OKLCH | Hex | Use |
 |---|---|---|---|
-| `ink` on paper | 16.55 | 16.45 | 4.5 |
-| `muted` on paper | 7.15 | 9.15 | 4.5 |
-| `neutral` on paper | 3.93 | 5.40 | 3.0 (large text / borders **only**) |
-| `accentInk` on paper | 10.04 | 12.58 | 4.5 |
-| `focus` on paper | 4.86 | 8.05 | 3.0 |
-| `paper` on `ink` fill | 16.55 | 16.45 | 4.5 |
+| `paper` | `oklch(13.1% 0.011 74)` | `#0A0704` | Screen background |
+| `surface` | `oklch(17.9% 0.013 55)` | `#16100C` | Cards, sheets, input fill |
+| `surface2` | `oklch(24.0% 0.013 62)` | `#241E19` | Pressed / splash / disabled fill |
+| `rule` | `oklch(28.1% 0.012 67)` | `#2D2823` | Dividers |
+| `neutral` | `oklch(62.0% 0.015 71)` | `#8C857D` | Control borders, icons, hints |
+| `muted` | `oklch(80.0% 0.012 80)` | `#C2BDB5` | Secondary text |
+| `ink` | `oklch(95.9% 0.010 82)` | `#F5F1EA` | Primary text |
+| `accent` | `oklch(65.9% 0.224 25)` | `#FE4145` | `colorScheme.secondary` |
+| `accentInk` | `oklch(79.9% 0.111 25)` | `#FDA19A` | Accent-coloured **text** |
+| `focus` | `oklch(78.1% 0.165 70)` | `#F9A216` | `focusColor` |
+| `primary` | `oklch(60.5% 0.084 234)` | `#4A8AAC` | Buttons, FAB, focused input border |
+| `danger` | `oklch(62.0% 0.255 350)` | `#EA0C9B` | Destructive actions only |
 
-`neutral` is below 4.5 in light mode. It is **not** a body-text colour there — it is for borders,
-icons and text ≥ 24 px. Secondary copy uses `muted`.
+Chroma is clamped to what sRGB can hold. The source is CSS `oklch`, which a browser gamut-maps on the
+fly; Flutter ships literal ARGB, so these are the highest in-gamut chroma at each lightness rather
+than the source numbers.
 
-### Accent discipline
+**`primary` is blue in dark and terracotta in light.** The dark accent is a bleed red; a terracotta
+button beside it would read as a washed-out version of the same hue. Blue is the one direction that
+separates cleanly from both the red accent and the amber focus.
 
-The accent is a highlighter, not a colour block. It occupies **≤ 3% of any screen**. It is allowed on:
-the focus ring, the active tab or nav item, the "due now" marker, a small square anchoring a heading,
-and the FAB. It is **not** allowed as a full-width button fill, a header band, or a section background.
+**`danger` is magenta in dark and red in light,** for the same reason: the dark accent *is* red, and a
+destructive action in a second red is one nobody can tell apart from an attention marker. Measured
+separation against the accent: ΔE 15.2 normal, 14.2 deuteran.
 
-**The primary button is `ink`-filled, not accent-filled.** That is the canonical modern-minimal pair —
-ink fill for primary, outlined for secondary — and it is also the only version that clears 4.5:1 on the
-label. Coral on paper measures 3.60, which is fine for a boundary and wrong for text.
+Elevation goes lighter, never darker, in both modes.
+
+### Semantic palette
+
+Four hues that communicate state rather than identity. Each mode lifts them to sit on its own paper.
+
+| Token | Light | Dark | Meaning |
+|---|---|---|---|
+| `success` | `#5DBA76` | `#7BC96F` | Settled, synced, on track |
+| `info` | `#3D7FE8` | `#6BA0F5` | Neutral information |
+| `warning` | `#E0A938` | `#F5C842` | Charge approaching |
+| `critical` | `#F26B82` | `#F77890` | Overdue, alert |
+
+These are **fills and markers, never text.** None of them clears 4.5:1 on light paper.
+
+### Tab identity
+
+The bottom nav gives each destination its own colour so the active tab is legible without reading the
+label. A standard `NavigationBar` paints every selection the same primary; this one does not.
+
+| Tab | Light | Dark |
+|---|---|---|
+| Resumen | `tabBlue` `#4A8AAC` | `tabBlue` `#4A8AAC` |
+| Suscripciones | `success` | `successDark` |
+| Tarjetas | `tabPurple` `#5B2C6F` | `tabPurpleDark` `#7B3D9E` |
+| Avisos | `critical` | `criticalDark` |
+
+Resumen holds the same blue in both modes — it is the home tab and should not shift identity when the
+theme does. Tarjetas borrows the aubergine from the brand mark.
+
+Colour is never the only carrier: every tab ships its label, its outlined/filled icon pair, and a
+`Semantics(selected:)` flag.
 
 ### Card swatches
 
-`cards.color` is user data, and user-chosen colours are the single fastest way to destroy a palette.
-The picker offers **only these six** and nothing else — no free picker, no hex field.
+`cards.color` is user data, and free colour choice is the fastest way to destroy a palette. The picker
+offers **only these eight** — no free picker, no hex field. Lightness alternates deliberately; a set at
+constant lightness separates by hue alone, which is exactly what fails for a colourblind reader.
 
-| Name | Hex | OKLCH |
-|---|---|---|
-| Ámbar | `#D57700` | `oklch(66% 0.155 60)` |
-| Verde | `#227405` | `oklch(49% 0.155 140)` |
-| Cian | `#0CA3BE` | `oklch(66% 0.115 215)` |
-| Índigo | `#494ECF` | `oklch(50% 0.195 275)` |
-| Rosa | `#DC58B7` | `oklch(66% 0.195 340)` |
-| Olivo | `#686800` | `oklch(50% 0.11 110)` |
+| Name | Hex | OKLCH | vs light `surface` | vs dark `surface` |
+|---|---|---|---|---|
+| Ámbar | `#D57700` | `oklch(66.0% 0.155 60)` | 2.74 | 5.81 |
+| Olivo | `#686800` | `oklch(50.1% 0.109 110)` | 4.97 | 3.20 |
+| Verde | `#227405` | `oklch(49.0% 0.155 140)` | 4.97 | 3.20 |
+| Cian | `#0CA3BE` | `oklch(65.9% 0.115 215)` | 2.53 | 6.28 |
+| Índigo | `#494ECF` | `oklch(50.0% 0.195 275)` | 5.41 | 2.94 |
+| Rosa | `#DC58B7` | `oklch(66.1% 0.195 340)` | 2.89 | 5.50 |
+| Morado | `#7B2D9E` | `oklch(46.3% 0.180 313)` | 6.54 | 2.43 |
+| Amarillo | `#D9A52A` | `oklch(75.1% 0.143 84)` | 1.89 | 8.41 |
 
-**Six, not eight, and the lightness alternates.** An earlier set used eight hues at a constant
-`L 62`. It failed the categorical colour checks outright: amber against olive measured ΔE 1.1 under
-deuteranopia — the same colour to a red-green colourblind reader — and teal against cyan measured
-ΔE 7.4 under *normal* vision. Constant lightness with only hue varying is exactly what produces
-that. Alternating lightness carries the separation that hue alone cannot.
+`#494ECF` (Índigo) is the default for a new card.
 
-Verified with a validator, not by eye: both papers pass the lightness band, the chroma floor,
-adjacent-pair CVD separation (worst 8.8 protan) and the normal-vision floor (worst 23.3). One set
-serves both modes.
+Several swatches fall below 3:1 against the card surface, which obligates relief: **a swatch never
+appears without its alias in text beside it.** Colour is never the only carrier of identity. See
+§10 for the open CVD finding on this set.
 
-Three swatches fall below 3:1 against the card surface, which obligates relief: **a swatch never
-appears without its alias in text beside it**, and the proportion bar is always paired with the
-per-card list that names and totals each segment. Colour is never the only carrier of identity.
+### Card brand marks
 
-Hues 20–45 are reserved — a card swatch in coral would read as an interactive accent mark.
+Brand colours are external identity, not palette. They live in
+[card_assets.dart](lib/data/models/cards/card_assets.dart) and are the only literal colours in the app
+outside `app_colors.dart`, because Visa navy is Visa's number and not ours to re-tune.
+
+`Visa #1A1F71 · Mastercard #EB001B · Amex #006FCF · Otra #C19A3F`
+
+### Measured contrast
+
+Computed, not estimated. WCAG 2.1 ratios against `paper`.
+
+| Pair | Light | Dark | Floor |
+|---|---|---|---|
+| `ink` on paper | 15.87 | 17.85 | 4.5 |
+| `muted` on paper | 5.52 | 10.76 | 4.5 |
+| `neutral` on paper | 3.61 | 5.52 | 3.0 (borders / large text **only**) |
+| `accentInk` on paper | 8.69 | 10.28 | 4.5 |
+| `accent` on paper | 3.36 | 5.80 | 3.0 |
+| `focus` on paper | 3.36 | 9.77 | 3.0 |
+| `danger` on paper | 5.59 | 4.81 | 4.5 |
+| `onPrimary` on `primary` fill | **3.36** | 5.28 | 4.5 |
+
+`neutral` is below 4.5 in light mode. It is **not** a body-text colour there — borders, icons and text
+≥ 24 px only. Secondary copy uses `muted`.
+
+The primary button label in light mode measures 3.36 and does not clear the floor. This is a known
+deviation, recorded in §10.
+
+### Accent discipline
+
+The accent family is a highlighter, not a colour block. Allowed on: the focus ring, the active tab
+chip, the "due now" marker, the card swatch bar, and the FAB. **Not** allowed as a header band, a
+section background, or a page-width fill.
+
+The primary button is the one deliberate exception — it is terracotta-filled rather than ink-filled,
+which buys chromatic identity at the cost of label contrast. See §10.
+
+---
 
 ## 3. Typography
 
-Two families: **Geist** and **Geist Mono**. Bundled as assets under `lib/assets/fonts/`, OFL licensed,
-no runtime fetch and no font package — the app works offline, which is the point of the whole thing.
+Two families: **Geist** and **Geist Mono**. Bundled under `lib/assets/fonts/`, OFL licensed, no
+runtime fetch and no font package — the app works offline, which is the point of the whole thing.
 
 - **Geist 400** — body and everything unlabelled
 - **Geist 500** — buttons, tabs, form labels
-- **Geist 700** — every heading. Body 400 against heading 700 is a 300-unit gap; 600 would read as a
-  default setting rather than a decision
-- **Geist Mono 400/500** — **one role only: monetary figures and card last4.** Every amount in the app
-  is mono with tabular figures, so columns of money align down the screen. Nothing else gets mono
+- **Geist 700** — every heading. A 300-unit gap against the body reads as a decision; 600 reads as a
+  default
+- **Geist Mono 400/500** — **one role only: monetary figures and card last4.** Every amount is mono
+  with tabular figures so columns of money align down the screen. Nothing else gets mono
 
 ### Scale
 
-Major third (1.25) from a 16 px base, in logical pixels:
+Major third (1.25) from a 16 px base, in logical pixels. The names below are the `TextTheme` slots the
+code actually assigns.
 
-| Token | Size | Weight | Line height | Use |
-|---|---|---|---|---|
-| `display` | 40 | 700 | 1.08 | The one number on the dashboard |
-| `xl` | 31 | 700 | 1.15 | Screen title |
-| `lg` | 25 | 700 | 1.2 | Section heading |
-| `md` | 20 | 700 | 1.3 | Card title |
-| `base` | 16 | 400 | 1.5 | Body — the floor for reading copy |
-| `sm` | 13 | 400/500 | 1.4 | Labels, metadata, helper text |
-| `xs` | 11 | 500 | 1.3 | Tracked uppercase micro-label. `letter-spacing: 0.10em` |
+| Slot | Size | Weight | Line height | Tracking | Use |
+|---|---|---|---|---|---|
+| `displayLarge` | 40 | 700 | 1.08 | −0.02em | Reserved display |
+| `headlineLarge` | 31 | 700 | 1.15 | −0.02em | Screen title |
+| `titleLarge` | 25 | 700 | 1.20 | −0.01em | AppBar title, section heading |
+| `titleMedium` | 20 | 700 | 1.30 | −0.01em | Card title |
+| `bodyLarge` | 16 | 400 | 1.50 | 0 | Body — the floor for reading copy |
+| `bodySmall` | 13 | 400 | 1.40 | 0 | Metadata, helper text (`muted`) |
+| `labelLarge` | 13 | 500 | 1.40 | 0 | Buttons, form labels |
+| `labelSmall` | 11 | 500 | 1.30 | +0.10em | Tracked uppercase micro-label |
 
-**No more than five of these on one screen.** More hierarchy comes from weight and colour, not another
-size. Tracking is `-0.02em` on `display`/`xl`, `-0.01em` on `lg`/`md`, `0` on body.
+Three mono styles sit outside the `TextTheme`, because money is a role and not a heading level:
 
-Money is **always** `tabularFigures`. A subscription list where the decimal points don't line up looks
-broken even to someone who can't say why.
+| Helper | Size | Weight | Use |
+|---|---|---|---|
+| `displayAmount` | 40 | 500 | The one number on the dashboard |
+| `amount` | 16 | 400 | Every amount in a list |
+| `figure` | 13 | 400 | Card last4 and short figure runs |
+
+**No more than five sizes on one screen.** More hierarchy comes from weight and colour, not another
+size. Money is **always** `tabularFigures` — a list where the decimal points don't line up looks broken
+even to someone who can't say why.
 
 ---
 
@@ -178,17 +236,21 @@ broken even to someone who can't say why.
 
 4 pt scale, named by role. Never type a raw number in a widget.
 
-`3xs 2 · 2xs 4 · xs 8 · sm 12 · md 16 · lg 24 · xl 40 · 2xl 64 · 3xl 96`
+`xs3 2 · xs2 4 · xs 8 · sm 12 · md 16 · lg 24 · xl 40 · xl2 64 · xl3 96`
 
-Radii: **8** inputs and chips · **12** cards and sheets · **999** pills, FAB and avatars.
+Role aliases: `screenPadding md · cardPadding lg · listGap sm · sectionGap xl · swatchBar 3`
 
-**Rhythm must be uneven.** If the card padding equals the list gap equals the screen padding, the
-screen is a template. Screen padding `md`, card padding `lg`, gap between cards `sm`, gap between
-sections `xl`. Generous above a section heading, tight below it.
+Radii: **8** (`radiusInput`) inputs, chips, nav chips · **12** (`radiusCard`) cards, sheets, buttons,
+FAB, list tiles · **999** (`radiusPill`) the card swatch picker only.
 
-**Depth is weight and scale, not shadow.** One shadow exists in the system — `0 1px 2px ink/5%` on the
-FAB and bottom sheet. Cards are separated by their `surface` fill against `paper`, not by a drop
-shadow. No card inside a card, ever: pick the outer or the inner, not both.
+**Buttons and the FAB use `radiusCard`, not a pill.** A pill button beside a 12-radius card is two
+shape languages on one screen.
+
+**Rhythm must be uneven.** If card padding equals list gap equals screen padding, the screen is a
+template. Generous above a section heading, tight below it.
+
+**Depth is weight and scale, not shadow.** The FAB carries `elevation: 1`; nothing else does. Cards are
+separated by their `surface` fill against `paper`. No card inside a card, ever.
 
 ---
 
@@ -198,36 +260,41 @@ Three durations, three curves, and a hard budget of **two moving things per scre
 
 | Token | Value | Use |
 |---|---|---|
-| `micro` | 120 ms | Press feedback, toggle, colour shift |
-| `short` | 220 ms | Sheet handle, chip selection, tooltip |
-| `long` | 420 ms | Route transition, bottom sheet, expand |
+| `micro` | 120 ms | Press feedback, toggle, colour shift, tooltip wait |
+| `short` | 220 ms | List item entry, chip selection, nav chip |
+| `long` | 420 ms | Route transition, bottom sheet, hero entry |
+| `reduced` | 150 ms | Reduced-motion replacement for any spatial transition |
 
 | Curve | Cubic | Use |
 |---|---|---|
 | `easeOut` | `(0.16, 1, 0.3, 1)` | Anything entering |
-| `easeIn` | `(0.7, 0, 0.84, 0)` | Anything leaving — at 75% of the enter duration |
+| `easeIn` | `(0.7, 0, 0.84, 0)` | Anything leaving — `AppMotion.exit()` runs it at 75% |
 | `easeInOut` | `(0.65, 0, 0.35, 1)` | State toggles |
 
-Animate opacity and transform only. Never a bounce, never an overshoot, never an infinite loop that
-isn't a real loading indicator. Honour `MediaQuery.disableAnimations` — spatial motion collapses to a
-150 ms fade.
+Two shared widgets own every entry animation:
+[AnimatedListItem](lib/ui/widgets/common/motion/animated_list_item.dart) (fade-up, 40 ms stagger
+capped at the fifth item) and [AnimatedHero](lib/ui/widgets/common/motion/animated_hero.dart)
+(fade-down). Both collapse to their child when `MediaQuery.disableAnimations` is set.
 
-If you can't say what a transition communicates, delete it. Most screens here need none.
+Animate opacity and transform only. Never a bounce, never an overshoot, never an infinite loop that
+isn't a real loading indicator. If you can't say what a transition communicates, delete it.
 
 ---
 
 ## 6. Component voice
 
-- **Subscription row** — name in `base` 400, next charge date in `sm` `muted`, amount right-aligned in
-  Geist Mono with tabular figures. The card colour appears as a 3 px left bar, never as a filled tile.
-- **Card total** — alias in `md` 700, monthly total in `display` mono. The swatch is a small square
-  beside the alias, not a background.
-- **Primary button** — `ink` fill, `paper` label, Geist 500, pill radius, full width on forms only.
-- **Secondary button** — `neutral` 1 px outline, `ink` label, transparent fill.
+- **Subscription row** — name in `bodyLarge`, next charge in `bodySmall` `muted`, amount right-aligned
+  in Geist Mono. The card colour is a 3 px left bar, never a filled tile.
+- **Card total** — alias in `titleMedium`, monthly total in `displayAmount`. The swatch is a small
+  square beside the alias, not a background.
+- **Primary button** — `primary` fill, `paper` label, Geist 500, `radiusCard`, full width on forms only.
+- **Secondary button** — `primary` 1 px outline, `primary` label, transparent fill.
 - **Destructive** — `danger` text on transparent, never a filled red button. Confirm with an undo
-  snackbar, not a modal.
-- **Empty state** — one sentence in `base` `muted` and one button. No illustration, no icon balloon.
-- **Focus** — a 2 px `focus` ring, always visible, **never animated in**. It appears instantly.
+  snackbar where the action is reversible, a dialog only where it is not.
+- **Empty state** — one sentence in `bodyLarge` `muted` and one button. No illustration, no icon balloon.
+- **Skeleton** — shimmer over `surface2`/`surface` (light) or `surface`/`surface2` (dark), shaped like
+  the content it replaces. Never a spinner where a skeleton fits.
+- **Focus** — a 2 px `primary` ring, always visible, **never animated in**.
 
 Every interactive widget ships all its states: default, pressed, focused, disabled, loading, error.
 
@@ -236,18 +303,34 @@ Every interactive widget ships all its states: default, pressed, focused, disabl
 **All user-facing text is Spanish (es-MX, tuteo).** The app locale is fixed to `es-MX` so Material's
 own strings follow. Code and comments stay English — see [CLAUDE.md](CLAUDE.md).
 
-Verbs, not nouns. *"Agregar suscripción"*, not *"Gestión de suscripciones"*. Amounts always carry
-their currency. Dates are relative when close (*"en 3 días"*) and absolute when not (*"12 sep"*). No
-invented numbers anywhere — an empty dashboard shows an em dash and a label, never a fake total.
+Verbs, not nouns. *"Agregar suscripción"*, not *"Gestión de suscripciones"*. Amounts always carry their
+currency, taken from the profile. Dates are relative when close (*"En 3 días"*, *"Mañana"*) and
+absolute when not (*"12 sep"*). No invented numbers anywhere — an empty dashboard shows an em dash and
+a label, never a fake total.
 
 ---
 
-## 7. Banned in this project
+## 7. Theme control
 
-Carried from the Hallmark anti-pattern list, plus the ones this domain invites:
+Three modes, persisted locally: **Sistema · Claro · Oscuro**
+([theme_mode_enum.dart](lib/config/theme/theme_mode_enum.dart)).
+
+Storage is `shared_preferences`, not the `profiles` row and not the keychain. The theme must apply on
+the sign-in screen, where there is no session to read a row from, and must work with no network. It is
+a preference, not a secret.
+
+Two entry points: a `SegmentedButton` with all three modes in Perfil, and a two-state
+[ThemeToggleButton](lib/ui/widgets/common/theme_toggle_button.dart) in every tab AppBar and on the auth
+screens, which flips straight to the explicit opposite of the current mode.
+
+The mode is applied to `state` before the disk write, so the theme changes on the frame of the tap.
+
+---
+
+## 8. Banned in this project
 
 - Pure `#000` or `#FFF` anywhere
-- Zero-chroma greys — every neutral carries the anchor tint
+- Zero-chroma greys — every neutral carries the anchor tint (`ink` is the one deliberate exception)
 - Gradients on text; three-stop gradients at all
 - Glassmorphism, blurred translucent panels
 - Emoji as iconography
@@ -255,20 +338,50 @@ Carried from the Hallmark anti-pattern list, plus the ones this domain invites:
 - Three identical cards in a row with icon-above-title-above-body
 - A drop shadow doing a border's job
 - Bounce or spring easing on any UI state
-- Red-and-green as the only signal for a state — always pair with an icon or a label
+- Colour as the only signal for a state — always pair with an icon or a label
 - Invented figures, fake totals, placeholder testimonials
 - Italic headings
 
 ---
 
-## 8. Where the tokens live
+## 9. Where the tokens live
 
 | File | Holds |
 |---|---|
-| [lib/config/theme/app_colors.dart](lib/config/theme/app_colors.dart) | Both palettes and the card swatches |
-| [lib/config/theme/app_typography.dart](lib/config/theme/app_typography.dart) | Families, scale, the money style |
-| [lib/config/theme/app_spacing.dart](lib/config/theme/app_spacing.dart) | Spacing scale and radii |
-| [lib/config/theme/app_motion.dart](lib/config/theme/app_motion.dart) | Durations and curves |
-| [lib/config/theme/app_theme.dart](lib/config/theme/app_theme.dart) | Assembles `ThemeData` for both modes |
+| [app_colors.dart](lib/config/theme/app_colors.dart) | Both palettes, semantics, tabs, card swatches |
+| [app_typography.dart](lib/config/theme/app_typography.dart) | Families, scale, the money styles |
+| [app_spacing.dart](lib/config/theme/app_spacing.dart) | Spacing scale, role aliases, radii |
+| [app_motion.dart](lib/config/theme/app_motion.dart) | Durations and curves |
+| [app_theme.dart](lib/config/theme/app_theme.dart) | Assembles `ThemeData` for both modes |
+| [theme_mode_enum.dart](lib/config/theme/theme_mode_enum.dart) | The three user-facing modes |
 
 A widget that hardcodes a colour, a size, a radius or a duration is a bug. Reference the token.
+
+---
+
+## 10. Known deviations
+
+Measured, open, and deliberately not fixed in the change that produced this document. Each one is a
+decision waiting to be made, not an oversight.
+
+1. **Primary button label measures 3.36:1 in light mode** (`paper` on terracotta), against a 4.5 floor.
+   The chromatic button was chosen over an ink fill for identity. Clearing the floor means either
+   darkening `primary` toward `accentInk` or reverting the fill to `ink`.
+2. **Nav chip icons fall below the 3:1 non-text floor.** Paper icon on chip: Suscripciones 2.19 light /
+   1.84 dark, Avisos 2.66 / 2.38, Resumen 3.47 / 3.47, Tarjetas 9.41 / 6.38. The label under each chip
+   carries the meaning, so nothing is unreachable — but the icon itself is decorative at those ratios.
+3. **Input hints measure 3.34:1** (`neutral` on `surface`, light). Hint text is not required to clear
+   4.5 by WCAG, but at this ratio it is close to invisible in sunlight.
+4. **The accent budget is exceeded.** The ≤3%-of-screen rule predates the terracotta button fill and
+   the four coloured nav chips. Chromatic identity won; the rule as written no longer describes the app.
+5. **Card swatches fail all-pairs CVD separation.** Adjacent-pair checking passes, but
+   [SpendSplitWidget](lib/ui/widgets/dashboard/spend_split_widget.dart) sorts segments by amount, so any
+   two swatches can end up touching. Worst pairs: Olivo↔Verde ΔE 1.5 deutan / 8.3 normal, Rosa↔Cian
+   ΔE 2.6 deutan. Eight distinct lightness steps do not fit the usable band; the fix is to drop the
+   proportion bar rather than shrink the palette further.
+6. **[colored_nav_bar.dart](lib/ui/widgets/common/colored_nav_bar.dart) hardcodes design values** —
+   `220 ms`, `28`, `48`, `fontSize: 10`, `size: 20`. Every one of them should be a token.
+7. **`AppMotion.reduced` is defined and never read.** Reduced motion is honoured by collapsing to the
+   child, not by shortening the duration, so the token has no consumer.
+8. **`colorScheme.secondary` is never consumed.** `accent` and `accentInk` reach the UI only through
+   the snackbar action colour; the terracotta identity travels as `primary` instead.

@@ -33,10 +33,7 @@ class SignInScreen extends StatelessWidget {
             // Theme toggle pinned to the top-right of the safe area.
             // The form below scrolls independently so the toggle stays
             // visible while the user types.
-            Align(
-              alignment: Alignment.topRight,
-              child: ThemeToggleButton(),
-            ),
+            Align(alignment: Alignment.topRight, child: ThemeToggleButton()),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
