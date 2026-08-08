@@ -8,9 +8,12 @@ import '../../../data/models/cards/card_total_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 import '../../../data/providers/dashboard/dashboard_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
-import '../../../data/services/supabase/supabase_service.dart';
+import '../../views/dashboard/debtors_view.dart';
+import '../../views/dashboard/statement_view.dart';
+import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/common/section_label_widget.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
 import '../../widgets/dashboard/dashboard_skeleton.dart';
@@ -60,7 +63,9 @@ class DashboardScreen extends ConsumerWidget {
             ref
               ..invalidate(subscriptionsProvider)
               ..invalidate(cardTotalsProvider)
-              ..invalidate(upcomingProvider);
+              ..invalidate(upcomingProvider)
+              ..invalidate(cardStatementsProvider)
+              ..invalidate(debtorsProvider);
             await ref.read(cardTotalsProvider.future);
           },
           child: ListView(
@@ -68,7 +73,9 @@ class DashboardScreen extends ConsumerWidget {
             children: [
               const AnimatedHero(child: _MonthlyTotal()),
               ..._breakdown(totals.value ?? const [], uncarded, today),
+              StatementView(today: today),
               ..._upcoming(upcoming.value ?? const [], today),
+              const DebtorsView(),
             ],
           ),
         ),
@@ -98,7 +105,7 @@ class DashboardScreen extends ConsumerWidget {
     return [
       SpendSplitWidget(totals: rows),
       if (rows.length >= 2) const SizedBox(height: AppSpacing.lg),
-      const _SectionLabel('POR TARJETA'),
+      const SectionLabelWidget('POR TARJETA'),
       const SizedBox(height: AppSpacing.sm),
       for (var i = 0; i < rows.length; i++) ...[
         AnimatedListItem(
@@ -120,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
     final double sum = dated.fold(0, (total, item) => total + item.amount);
     return [
       const SizedBox(height: AppSpacing.sectionGap),
-      const _SectionLabel('PRÓXIMOS 30 DÍAS'),
+      const SectionLabelWidget('PRÓXIMOS 30 DÍAS'),
       const SizedBox(height: AppSpacing.sm),
       Card(
         child: Padding(
@@ -143,18 +150,6 @@ class DashboardScreen extends ConsumerWidget {
       ),
     ];
   }
-}
-
-/// Uppercase micro-label. Reads from labelSmall so the tracking stays in one
-/// place rather than being retyped per section.
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(text, style: Theme.of(context).textTheme.labelSmall);
 }
 
 class _Total extends StatelessWidget {
