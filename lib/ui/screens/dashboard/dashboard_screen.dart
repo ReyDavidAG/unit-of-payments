@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
@@ -10,8 +9,9 @@ import '../../../data/models/subscriptions/subscription_model.dart';
 import '../../../data/providers/dashboard/dashboard_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
-import '../profile/profile_screen.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/common/theme_toggle_button.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
 import '../../widgets/dashboard/dashboard_skeleton.dart';
 import '../../widgets/dashboard/spend_split_widget.dart';
@@ -38,13 +38,7 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resumen'),
-        actions: [
-          IconButton(
-            onPressed: () => context.pushNamed(ProfileScreen.routeName),
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Perfil',
-          ),
-        ],
+        actions: const [ThemeToggleButton(), ProfileActionButton()],
       ),
       body: totals.when(
         loading: () => const DashboardSkeleton(),

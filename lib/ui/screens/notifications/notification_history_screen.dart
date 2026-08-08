@@ -6,6 +6,8 @@ import '../../../data/models/notifications/notification_log_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/common/theme_toggle_button.dart';
 import '../../widgets/notifications/notification_entry_skeleton.dart';
 import '../../widgets/notifications/notification_entry_widget.dart';
 
@@ -23,7 +25,10 @@ class NotificationHistoryScreen extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Avisos')),
+      appBar: AppBar(
+        title: const Text('Avisos'),
+        actions: const [ThemeToggleButton(), ProfileActionButton()],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(notificationLogProvider);
