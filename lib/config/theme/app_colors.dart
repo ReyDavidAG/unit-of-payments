@@ -46,6 +46,11 @@ class AppColors {
 
   static const Color defaultSwatch = Color(0xFF4B84E2);
 
+  /// The storage format for `cards.color`. Uppercase `#RRGGBB`, which is what
+  /// the database CHECK constraint expects.
+  static String hexOf(Color color) =>
+      '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
   /// Falls back instead of throwing: a colour from an older row must not crash
   /// a list. Unknown hex values render as the default swatch.
   static Color swatchFromHex(String? hex) {
