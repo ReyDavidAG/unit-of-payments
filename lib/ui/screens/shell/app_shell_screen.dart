@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_motion.dart';
@@ -78,44 +79,85 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
     ref.watch(notificationSyncProvider);
     final int currentIndex = ref.watch(shellIndexProvider);
 
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const ClampingScrollPhysics(),
-        children: const [
-          DashboardScreen(),
-          SubscriptionsScreen(),
-          CardsScreen(),
-          NotificationHistoryScreen(),
-        ],
+    // PopScope on the shell: pressing the system back while inside the
+    // authenticated shell asks before quitting the app. The dialog is
+    // shown via the shell's own context so it lives above any open
+    // sheet on a tab.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmExit(context);
+      },
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          physics: const ClampingScrollPhysics(),
+          children: const [
+            DashboardScreen(),
+            SubscriptionsScreen(),
+            CardsScreen(),
+            NotificationHistoryScreen(),
+          ],
+        ),
+        bottomNavigationBar: ColoredNavBar(
+          currentIndex: currentIndex,
+          onTap: _onTabTapped,
+          items: const [
+            NavBarItem(
+              icon: Icons.pie_chart_outline,
+              selectedIcon: Icons.pie_chart,
+              label: 'Resumen',
+            ),
+            NavBarItem(
+              icon: Icons.receipt_long_outlined,
+              selectedIcon: Icons.receipt_long,
+              label: 'Suscripciones',
+            ),
+            NavBarItem(
+              icon: Icons.credit_card_outlined,
+              selectedIcon: Icons.credit_card,
+              label: 'Tarjetas',
+            ),
+            NavBarItem(
+              icon: Icons.notifications_none,
+              selectedIcon: Icons.notifications,
+              label: 'Avisos',
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: ColoredNavBar(
-        currentIndex: currentIndex,
-        onTap: _onTabTapped,
-        items: const [
-          NavBarItem(
-            icon: Icons.pie_chart_outline,
-            selectedIcon: Icons.pie_chart,
-            label: 'Resumen',
+    );
+  }
+
+  /// Confirms the user wants to quit before letting the system pop the
+  /// shell route and exit the app. /shell is at the top of the stack,
+  /// so the only way out is [SystemNavigator.pop].
+  Future<void> _confirmExit(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Salir de Vence?'),
+        content: const Text(
+          'Estás a punto de cerrar la app. Tus datos quedan guardados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
           ),
-          NavBarItem(
-            icon: Icons.receipt_long_outlined,
-            selectedIcon: Icons.receipt_long,
-            label: 'Suscripciones',
-          ),
-          NavBarItem(
-            icon: Icons.credit_card_outlined,
-            selectedIcon: Icons.credit_card,
-            label: 'Tarjetas',
-          ),
-          NavBarItem(
-            icon: Icons.notifications_none,
-            selectedIcon: Icons.notifications,
-            label: 'Avisos',
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Salir'),
           ),
         ],
       ),
     );
+    if (confirmed == true) {
+      // SystemNavigator.pop is the only way to exit on Android without
+      // a router pop. Guarded against re-entry with the dialog context.
+      SystemNavigator.pop();
+    }
   }
 }
