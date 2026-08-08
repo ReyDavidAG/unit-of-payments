@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unit_of_payments/config/theme/app_colors.dart';
+import 'package:unit_of_payments/config/theme/app_theme.dart';
 import 'package:unit_of_payments/config/theme/app_typography.dart';
-import 'package:unit_of_payments/main.dart';
 
 void main() {
   testWidgets('theme resolves to the locked tokens', (tester) async {
-    await tester.pumpWidget(const MainApp());
+    // Pumps the theme directly: MainApp now needs a live Supabase client.
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.light, home: const Scaffold()),
+    );
     final ThemeData theme = Theme.of(
       tester.element(find.byType(Scaffold).first),
     );
