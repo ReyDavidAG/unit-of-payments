@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
@@ -7,7 +8,9 @@ import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// A charge due soon. Denser than the subscriptions list on purpose: this is a
-/// glance, not a place to edit.
+/// glance, not a place to edit. The charge-label colour follows the
+/// semantic palette: critical when imminent, warning when soon, success
+/// when there's plenty of runway.
 class UpcomingChargeWidget extends StatelessWidget {
   const UpcomingChargeWidget({
     required this.subscription,
@@ -22,7 +25,8 @@ class UpcomingChargeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final int days = subscription.daysUntilCharge(today) ?? 0;
-    final bool imminent = days <= 3;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color? urgencyColor = _urgencyColor(days, isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -32,8 +36,6 @@ class UpcomingChargeWidget extends StatelessWidget {
             width: AppSpacing.xs,
             height: AppSpacing.xs,
             decoration: BoxDecoration(
-              // Brand accent on the dot: the row's tiny identifier. Falls
-              // back to outline when the subscription has no card attached.
               color: subscription.cardBrand == null
                   ? theme.colorScheme.outline
                   : CardAssets.accent(subscription.cardBrand!),
@@ -53,8 +55,11 @@ class UpcomingChargeWidget extends StatelessWidget {
           Text(
             MoneyHelper.chargeLabel(subscription.nextChargeDate!, days),
             style: theme.textTheme.bodySmall?.copyWith(
-              // The accent marks urgency and nothing else on this screen.
-              color: imminent ? theme.colorScheme.secondary : null,
+              // The semantic palette carries the time-to-charge signal:
+              // pink when it's now, amber when it's close, green when
+              // there's breathing room.
+              color: urgencyColor,
+              fontWeight: urgencyColor == null ? null : FontWeight.w500,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -65,5 +70,15 @@ class UpcomingChargeWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Map days-until-charge to a semantic colour. Null means "no tint"
+  /// — the default muted copy. Critical / warning / success escalate
+  /// with proximity.
+  static Color? _urgencyColor(int days, bool isDark) {
+    if (days <= 3) return isDark ? AppColors.criticalDark : AppColors.critical;
+    if (days <= 6) return isDark ? AppColors.warningDark : AppColors.warning;
+    if (days <= 13) return isDark ? AppColors.successDark : AppColors.success;
+    return null;
   }
 }

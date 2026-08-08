@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
@@ -24,7 +25,7 @@ class SubscriptionTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final int? days = subscription.daysUntilCharge(today);
-    final bool imminent = days != null && days <= 3;
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -66,11 +67,14 @@ class SubscriptionTileWidget extends StatelessWidget {
                                 days ?? 0,
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                // The accent is the attention colour, and this
-                                // is the only thing on the row that wants it.
-                                color: imminent
-                                    ? theme.colorScheme.secondary
-                                    : null,
+                                // Semantic palette: critical when imminent,
+                                // warning when soon, success when there's
+                                // runway, default muted otherwise.
+                                color: _urgencyColor(days ?? 0, isDark),
+                                fontWeight:
+                                    _urgencyColor(days ?? 0, isDark) == null
+                                    ? null
+                                    : FontWeight.w500,
                               ),
                             ),
                         ],
@@ -84,6 +88,16 @@ class SubscriptionTileWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Map days-until-charge to a semantic colour. Null means "no tint"
+  /// — the default muted copy. Critical / warning / success escalate
+  /// with proximity.
+  static Color? _urgencyColor(int days, bool isDark) {
+    if (days <= 3) return isDark ? AppColors.criticalDark : AppColors.critical;
+    if (days <= 6) return isDark ? AppColors.warningDark : AppColors.warning;
+    if (days <= 13) return isDark ? AppColors.successDark : AppColors.success;
+    return null;
   }
 }
 

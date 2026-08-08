@@ -27,6 +27,15 @@ class AppColors {
   static const Color primary = Color(0xFFB8763B);
   static const Color onPrimary = paper;
 
+  // Semantic palette — used sparingly inside the app to communicate
+  // state: charge timing, sync status, urgency. Four hues inspired by
+  // the Hallmark Bubble example (green / blue / amber / pink), each
+  // carrying a distinct semantic so the colour itself is the message.
+  static const Color success = Color(0xFF5DBA76);
+  static const Color info = Color(0xFF3D7FE8);
+  static const Color warning = Color(0xFFE0A938);
+  static const Color critical = Color(0xFFF26B82);
+
   // Dark. Wayfare's Manifesto-dark palette: warm anchor at hue 60, bleed-red
   // accent at 25. Chroma is clamped to what sRGB can hold — the source is CSS
   // oklch, which the browser gamut-maps and Flutter cannot.
@@ -49,6 +58,14 @@ class AppColors {
   // identity across modes, not a black/white flip.
   static const Color primaryDark = Color(0xFF4A8AAC);
   static const Color onPrimaryDark = paperDark;
+
+  // Semantic palette in dark mode — same hues, lifted lightness so they
+  // pass contrast on the dark paper. Each one is the visual signal of
+  // its semantic role.
+  static const Color successDark = Color(0xFF7BC96F);
+  static const Color infoDark = Color(0xFF6BA0F5);
+  static const Color warningDark = Color(0xFFF5C842);
+  static const Color criticalDark = Color(0xFFF77890);
 
   /// The only colours a card alias may take. Six base swatches, plus two
   /// added per request: morado (Nu) and amarillo (Mercado Pago). The base
