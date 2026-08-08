@@ -11,22 +11,15 @@ import '../../../data/providers/theme/theme_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/profile/change_password_view.dart';
 import '../../widgets/common/motion/motion.dart';
-import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/profile/account_actions.dart';
+import '../../widgets/profile/identity_header.dart';
+import '../../widgets/profile/sign_out_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   static const String routeName = 'profile';
   static const String routePath = '/perfil';
-
-  static const double _avatarSize = 96;
-
-  /// Initial letter of the email, or '?' when no email is loaded yet.
-  /// Single uppercase glyph centred in the avatar circle.
-  String _avatarLetter(String email) {
-    if (email.isEmpty) return '?';
-    return email.substring(0, 1).toUpperCase();
-  }
 
   Future<void> _update(
     BuildContext context,
@@ -44,32 +37,9 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  /// Confirms the user actually wants to leave the session before calling
-  /// sign-out. A destructive button next to a non-destructive one needs
-  /// a guard so a stray tap doesn't end the session.
-  Future<void> _confirmSignOut(BuildContext context) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Cerrar sesión?'),
-        content: const Text('Vas a salir de tu cuenta en este dispositivo.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.critical,
-              foregroundColor: AppColors.paper,
-            ),
-            child: const Text('Cerrar sesión'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
+  Future<void> _confirmSignOut(BuildContext context, String email) async {
+    final bool confirmed = await showSignOutDialog(context, email: email);
+    if (confirmed) {
       await SupabaseService.signOut();
     }
   }
@@ -83,10 +53,7 @@ class ProfileScreen extends ConsumerWidget {
     final Color sectionDot = isDark ? AppColors.infoDark : AppColors.info;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Perfil'),
-        actions: const [ProfileActionButton()],
-      ),
+      appBar: AppBar(title: const Text('Perfil')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenPadding,
@@ -95,13 +62,7 @@ class ProfileScreen extends ConsumerWidget {
           AppSpacing.xl,
         ),
         children: [
-          AnimatedHero(
-            child: _IdentityHeader(
-              email: email,
-              avatarLetter: _avatarLetter(email),
-              isDark: isDark,
-            ),
-          ),
+          AnimatedHero(child: IdentityHeader(email: email)),
           const SizedBox(height: AppSpacing.xl2),
           ...switch (profile) {
             AsyncLoading() => const [
@@ -111,7 +72,6 @@ class ProfileScreen extends ConsumerWidget {
               context,
               ref,
               data,
-              isDark,
               sectionDot,
             ),
             _ => [
@@ -122,10 +82,9 @@ class ProfileScreen extends ConsumerWidget {
             ],
           },
           const SizedBox(height: AppSpacing.xl2),
-          _AccountActions(
+          AccountActions(
             onChangePassword: () => ChangePasswordView.show(context),
-            onSignOut: () => _confirmSignOut(context),
-            isDark: isDark,
+            onSignOut: () => _confirmSignOut(context, email),
           ),
         ],
       ),
@@ -136,7 +95,6 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ProfileModel profile,
-    bool isDark,
     Color sectionDot,
   ) => [
     _SectionHeader(label: 'PREFERENCIAS', color: sectionDot),
@@ -176,77 +134,13 @@ class ProfileScreen extends ConsumerWidget {
     const SizedBox(height: AppSpacing.xl2),
     _SectionHeader(label: 'APARIENCIA', color: sectionDot),
     const SizedBox(height: AppSpacing.sm),
-    _ThemeSelector(isDark: isDark),
+    _ThemeSelector(),
   ];
 }
 
-/// Header section: big circular avatar (initial over a primary fill),
-/// 'TU CUENTA' micro-label, email in title-medium, tagline in muted
-/// body. The avatar is the focal element — the email is below it.
-class _IdentityHeader extends StatelessWidget {
-  const _IdentityHeader({
-    required this.email,
-    required this.avatarLetter,
-    required this.isDark,
-  });
-
-  final String email;
-  final String avatarLetter;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color avatarBg = isDark ? AppColors.primaryDark : AppColors.primary;
-    final Color avatarFg = isDark
-        ? AppColors.onPrimaryDark
-        : AppColors.onPrimary;
-
-    return Column(
-      children: [
-        Container(
-          width: ProfileScreen._avatarSize,
-          height: ProfileScreen._avatarSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: avatarBg, shape: BoxShape.circle),
-          child: Text(
-            avatarLetter,
-            style: theme.textTheme.displayLarge?.copyWith(
-              color: avatarFg,
-              fontSize: 40,
-              height: 1,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          'TU CUENTA',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs2),
-        Text(
-          email.isEmpty ? 'Sin correo' : email,
-          style: theme.textTheme.titleLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          'A tiempo con cada cobro.',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
 /// Section header: a small coloured dot plus a micro-label. The dot's
-/// colour comes from the semantic palette so each section reads as
-/// its own kind of thing (info / warning / critical).
+/// colour comes from the semantic palette so each section reads as its
+/// own kind of thing (info / warning / critical).
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.label, required this.color});
 
@@ -270,20 +164,18 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Two-state theme selector (light ↔ dark). System mode is hidden in
-/// the profile by design: the toggle in the tab AppBar flips light/dark,
-/// and we keep the same contract here.
+/// Two-state theme selector (light ↔ dark). System mode is hidden in the
+/// profile by design: the toggle in the tab AppBar flips light/dark, and
+/// we keep the same contract here.
 class _ThemeSelector extends ConsumerWidget {
-  const _ThemeSelector({required this.isDark});
-
-  final bool isDark;
+  const _ThemeSelector();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AppThemeMode current =
-        ref.watch(themeProvider).value ?? AppThemeMode.light;
+    final AppThemeMode current = ref.watch(themeProvider);
 
     return SegmentedButton<AppThemeMode>(
+      showSelectedIcon: false,
       segments: const [
         ButtonSegment<AppThemeMode>(
           value: AppThemeMode.light,
@@ -301,50 +193,6 @@ class _ThemeSelector extends ConsumerWidget {
       },
       onSelectionChanged: (selection) =>
           ref.read(themeProvider.notifier).set(selection.first),
-    );
-  }
-}
-
-/// Action buttons at the bottom of the profile: change password (warning
-/// border + label) and sign out (critical full-width FilledButton). The
-/// sign-out confirmation is in [_confirmSignOut] on the parent.
-class _AccountActions extends StatelessWidget {
-  const _AccountActions({
-    required this.onChangePassword,
-    required this.onSignOut,
-    required this.isDark,
-  });
-
-  final VoidCallback onChangePassword;
-  final VoidCallback onSignOut;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color warning = isDark ? AppColors.warningDark : AppColors.warning;
-    final Color critical = isDark ? AppColors.criticalDark : AppColors.critical;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutlinedButton(
-          onPressed: onChangePassword,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: warning,
-            side: BorderSide(color: warning),
-          ),
-          child: const Text('Cambiar contraseña'),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        FilledButton(
-          onPressed: onSignOut,
-          style: FilledButton.styleFrom(
-            backgroundColor: critical,
-            foregroundColor: AppColors.paper,
-          ),
-          child: const Text('Cerrar sesión'),
-        ),
-      ],
     );
   }
 }
