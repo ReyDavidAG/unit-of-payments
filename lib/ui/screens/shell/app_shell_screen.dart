@@ -52,7 +52,13 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
     ref.watch(notificationSyncProvider);
 
     return Scaffold(
-      body: widget.navigationShell,
+      // GestureDetector on the body lets the user swipe horizontally between
+      // tabs without losing the indexedStack benefit of go_router — each
+      // branch stays mounted, scroll positions are preserved.
+      body: _SwipeNavigation(
+        shell: widget.navigationShell,
+        child: widget.navigationShell,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: widget.navigationShell.currentIndex,
         // initialLocation returns to a tab's root when it is already selected.
@@ -83,6 +89,38 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Horizontal swipe between tabs. Threshold is velocity-based (not
+/// distance-based) so a quick flick always commits and a slow drag is
+/// ignored — the latter is reserved for horizontal scrollables inside
+/// each tab. Direction maps to next/previous tab; edges clamp.
+class _SwipeNavigation extends StatelessWidget {
+  const _SwipeNavigation({required this.shell, required this.child});
+
+  final StatefulNavigationShell shell;
+  final Widget child;
+
+  static const double _velocityThreshold = 350; // px/s
+  static const int _lastBranch = 3; // four destinations: 0..3
+
+  void _onSwipe(double velocity) {
+    final int current = shell.currentIndex;
+    if (velocity > _velocityThreshold) {
+      shell.goBranch((current - 1).clamp(0, _lastBranch));
+    } else if (velocity < -_velocityThreshold) {
+      shell.goBranch((current + 1).clamp(0, _lastBranch));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) => _onSwipe(details.primaryVelocity ?? 0),
+      child: child,
     );
   }
 }
