@@ -6,6 +6,7 @@ import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/auth/password_reset_view.dart';
 import '../../widgets/auth/auth_form_widget.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/theme_toggle_button.dart';
 import 'sign_up_screen.dart';
 
 /// Sign in. The cascade logo is the hero: three stacked payment cards
@@ -27,78 +28,95 @@ class SignInScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenPadding,
-            vertical: AppSpacing.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.xl3),
-              AnimatedHero(
-                child: Center(
-                  child: Image.asset(
-                    'lib/assets/icon/splash.png',
-                    width: _logoWidth,
-                    height: _logoHeight,
-                    fit: BoxFit.contain,
-                  ),
+        child: Column(
+          children: [
+            // Theme toggle pinned to the top-right of the safe area.
+            // The form below scrolls independently so the toggle stays
+            // visible while the user types.
+            Align(
+              alignment: Alignment.topRight,
+              child: ThemeToggleButton(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPadding,
+                  vertical: AppSpacing.lg,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AnimatedHero(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Vence',
-                      style: theme.textTheme.displayLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'A tiempo con cada cobro.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
+                    const SizedBox(height: AppSpacing.xl3),
+                    AnimatedHero(
+                      child: Center(
+                        child: Image.asset(
+                          'lib/assets/icon/splash.png',
+                          width: _logoWidth,
+                          height: _logoHeight,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    AnimatedHero(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Vence',
+                            style: theme.textTheme.displayLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'A tiempo con cada cobro.',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl2),
+                    // AnimatedListItem wraps the whole form so the email +
+                    // password + CTA reveal together as one logical block —
+                    // email first, password second, submit last is the form's
+                    // own progression.
+                    AnimatedListItem(
+                      index: 0,
+                      child: AuthFormWidget(
+                        submitLabel: 'Iniciar sesión',
+                        onSubmit: (email, password) => SupabaseService.signIn(
+                          email: email,
+                          password: password,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AnimatedListItem(
+                      index: 1,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => PasswordResetView.show(context),
+                            child: const Text('Olvidé mi contraseña'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                context.goNamed(SignUpScreen.routeName),
+                            child: const Text('Crear cuenta'),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl2),
-              // AnimatedListItem wraps the whole form so the email + password
-              // + CTA reveal together as one logical block — email first,
-              // password second, submit last is the form's own progression.
-              AnimatedListItem(
-                index: 0,
-                child: AuthFormWidget(
-                  submitLabel: 'Iniciar sesión',
-                  onSubmit: (email, password) =>
-                      SupabaseService.signIn(email: email, password: password),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AnimatedListItem(
-                index: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => PasswordResetView.show(context),
-                      child: const Text('Olvidé mi contraseña'),
-                    ),
-                    TextButton(
-                      onPressed: () => context.goNamed(SignUpScreen.routeName),
-                      child: const Text('Crear cuenta'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
