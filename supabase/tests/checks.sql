@@ -38,11 +38,15 @@ end;
 $$;
 
 -- Every user table must have RLS on. Catches the table someone adds and forgets to protect.
-select tablename, rowsecurity, forcerowsecurity
-from pg_tables
-where schemaname = 'public'
-  and tablename not in ('keepalive')
-  and (not rowsecurity or (not forcerowsecurity and tablename <> 'profiles'));
+-- force lives on pg_class, not pg_tables.
+select c.relname, c.relrowsecurity, c.relforcerowsecurity
+from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relkind = 'r'
+  and c.relname <> 'keepalive'
+  and (not c.relrowsecurity
+       or (not c.relforcerowsecurity and c.relname <> 'profiles'));
 -- Expected: zero rows.
 
 -- Views must run as the caller, or they leak rows across users.

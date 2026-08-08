@@ -21,7 +21,8 @@ create table public.cards (
   brand      public.card_brand not null default 'other',
   last4      char(4),
   cutoff_day smallint,
-  color      text not null default '#4A5568',
+  -- One of the eight curated swatches in DESIGN.md. No free colour picker.
+  color      text not null default '#4B84E2',
   archived   boolean not null default false,
   created_at timestamptz not null default now(),
 
