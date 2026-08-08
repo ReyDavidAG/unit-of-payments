@@ -8,11 +8,17 @@ import '../../widgets/auth/auth_form_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import 'sign_in_screen.dart';
 
+/// Sign up. Mirrors the sign-in layout: cascade logo first, wordmark,
+/// tagline, form, link back. Same dimensions and timing so the user
+/// recognises it as the same family of screens.
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
 
   static const String routeName = 'sign-up';
   static const String routePath = '/sign-up';
+
+  static const double _logoWidth = 200;
+  static const double _logoHeight = 125; // 1.6:1, matches the cascade SVG
 
   /// With email confirmation on, sign-up returns no session and the router
   /// stays put. Without this the screen would look like nothing happened.
@@ -42,16 +48,33 @@ class SignUpScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+            vertical: AppSpacing.lg,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: AppSpacing.xl2),
+              const SizedBox(height: AppSpacing.xl3),
+              AnimatedHero(
+                child: Center(
+                  child: Image.asset(
+                    'lib/assets/icon/logo.svg',
+                    width: _logoWidth,
+                    height: _logoHeight,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
               AnimatedHero(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Crear cuenta', style: theme.textTheme.headlineLarge),
+                    Text(
+                      'Vence',
+                      style: theme.textTheme.displayLarge,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Seis caracteres como mínimo. Nada más.',
@@ -60,22 +83,31 @@ class SignUpScreen extends StatelessWidget {
                           alpha: 0.7,
                         ),
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
-              AuthFormWidget(
-                submitLabel: 'Crear cuenta',
-                onSubmit: (email, password) =>
-                    _signUp(context, email, password),
+              const SizedBox(height: AppSpacing.xl2),
+              AnimatedListItem(
+                index: 0,
+                child: AuthFormWidget(
+                  submitLabel: 'Crear cuenta',
+                  onSubmit: (email, password) =>
+                      _signUp(context, email, password),
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => context.goNamed(SignInScreen.routeName),
-                  child: const Text('Ya tengo una cuenta'),
+              AnimatedListItem(
+                index: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => context.goNamed(SignInScreen.routeName),
+                      child: const Text('Ya tengo una cuenta'),
+                    ),
+                  ],
                 ),
               ),
             ],
