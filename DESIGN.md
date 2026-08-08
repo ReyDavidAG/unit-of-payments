@@ -446,9 +446,22 @@ decision waiting to be made, not an oversight.
    two swatches can end up touching. Worst pairs: Olivo↔Verde ΔE 1.5 deutan / 8.3 normal, Rosa↔Cian
    ΔE 2.6 deutan. Eight distinct lightness steps do not fit the usable band; the fix is to drop the
    proportion bar rather than shrink the palette further.
-6. **[colored_nav_bar.dart](lib/ui/widgets/common/colored_nav_bar.dart) hardcodes design values** —
-   `220 ms`, `28`, `48`, `fontSize: 10`, `size: 20`. Every one of them should be a token.
-7. **`AppMotion.reduced` is defined and never read.** Reduced motion is honoured by collapsing to the
+6. **`AppMotion.reduced` is defined and never read.** Reduced motion is honoured by collapsing to the
    child, not by shortening the duration, so the token has no consumer.
-8. **`colorScheme.secondary` is never consumed.** `accent` and `accentInk` reach the UI only through
+7. **`colorScheme.secondary` is never consumed.** `accent` and `accentInk` reach the UI only through
    the snackbar action colour; the terracotta identity travels as `primary` instead.
+8. **The per-letter identity palette is outside this system and fails contrast in both modes.**
+   [letter_palette.dart](lib/config/theme/letter_palette.dart) fixes 26 saturated colours while the
+   surface under them flips between `#F1EBE2` and `#16100C`. Measured against both: **26 of 26 fail
+   4.5:1 in at least one mode**, six (`E H Q R S T`) fail in both, and nine light / eight dark fall
+   under the 3:1 floor the avatar's border needs. A fixed palette cannot sit on two grounds — it needs
+   a per-mode variant, or a fixed lightness with only the hue varying.
+9. **The profile action buttons are the least legible controls in the app.** *"Cerrar sesión"* is
+   cream on `critical`: **2.66:1** light, **2.38:1** dark, because `AppColors.paper` is hardcoded for
+   both modes. *"Cambiar contraseña"* is `warning` on paper at **1.93:1** in light.
+   [account_actions.dart](lib/ui/widgets/profile/account_actions.dart) needs the same per-mode pairing
+   [confirm_dialog.dart](lib/ui/widgets/common/confirm_dialog.dart) uses.
+10. **Eleven widgets hardcode the type instead of reading the token.**
+    `fontFamily: 'Geist', fontSize: 13, fontWeight: w500` is `labelLarge` character for character, and
+    `fontSize: 15 / 32 / 48` are off the scale entirely — it runs 40 / 31 / 25 / 20 / 16 / 13 / 11.
+    `flutter analyze` cannot see any of it.
