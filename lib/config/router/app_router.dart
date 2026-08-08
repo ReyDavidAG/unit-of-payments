@@ -7,6 +7,8 @@ import '../../data/services/supabase/supabase_service.dart';
 import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
+import '../../ui/screens/shell/app_shell_screen.dart';
+import '../../ui/screens/subscriptions/subscriptions_screen.dart';
 
 /// Routes and the session guard. The redirect is the only place that decides
 /// whether a screen is reachable.
@@ -14,7 +16,7 @@ class AppRouter {
   const AppRouter._();
 
   static final GoRouter router = GoRouter(
-    initialLocation: SignInScreen.routePath,
+    initialLocation: SubscriptionsScreen.routePath,
     refreshListenable: _AuthNotifier(),
     routes: [
       GoRoute(
@@ -27,10 +29,30 @@ class AppRouter {
         name: SignUpScreen.routeName,
         builder: (context, state) => const SignUpScreen(),
       ),
-      GoRoute(
-        path: CardsScreen.routePath,
-        name: CardsScreen.routeName,
-        builder: (context, state) => const CardsScreen(),
+      // One navigator per branch, so each tab keeps its own scroll position.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShellScreen(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: SubscriptionsScreen.routePath,
+                name: SubscriptionsScreen.routeName,
+                builder: (context, state) => const SubscriptionsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: CardsScreen.routePath,
+                name: CardsScreen.routeName,
+                builder: (context, state) => const CardsScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
     redirect: (context, state) {
@@ -43,7 +65,7 @@ class AppRouter {
         return SignInScreen.routePath;
       }
       if (signedIn && onAuthScreen) {
-        return CardsScreen.routePath;
+        return SubscriptionsScreen.routePath;
       }
       return null;
     },
