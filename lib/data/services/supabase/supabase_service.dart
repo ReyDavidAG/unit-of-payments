@@ -40,6 +40,15 @@ class SupabaseService {
 
   static Future<void> signOut() => auth.signOut();
 
+  static Future<UserResponse> updatePassword(String password) =>
+      auth.updateUser(UserAttributes(password: password));
+
+  /// Sends the reset link. Always resolves, even for an address with no
+  /// account: telling the caller which emails are registered would turn this
+  /// into an account-enumeration endpoint.
+  static Future<void> sendPasswordReset(String email) =>
+      auth.resetPasswordForEmail(email);
+
   /// Supabase returns machine-readable codes; the UI needs a sentence.
   /// Anything unmapped falls through to the server message rather than a
   /// generic string that hides what actually happened.
@@ -50,6 +59,7 @@ class SupabaseService {
         'email_not_confirmed' => 'Confirma tu correo antes de iniciar sesión.',
         'user_already_exists' ||
         'email_exists' => 'Ese correo ya tiene una cuenta.',
+        'same_password' => 'Esa ya es tu contraseña actual.',
         'weak_password' =>
           'La contraseña es muy débil. Usa al menos 6 caracteres.',
         'over_email_send_rate_limit' =>
