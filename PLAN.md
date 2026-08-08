@@ -396,7 +396,7 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 | 2.5 | `feature/design-system` | [DESIGN.md](DESIGN.md) + tokens en `config/theme/` + fuentes Geist ✅ |
 | 3 | `feature/supabase-auth` | `supabase_flutter`, `.env`, login/registro, sesión persistida, guard en el router ✅ |
 | 4 | `feature/cards` | CRUD de alias de tarjeta ✅ |
-| 5 | `feature/subscriptions` | CRUD de suscripciones ligadas a tarjeta |
+| 5 | `feature/subscriptions` | CRUD de suscripciones ligadas a tarjeta ✅ |
 | 6 | `feature/dashboard` | Totales por tarjeta y próximos cobros, desde las vistas |
 | 7 | `feature/notifications` | Programación local + `notification_log` |
 | 8 | `feature/notification-history` | Pantalla de historial |

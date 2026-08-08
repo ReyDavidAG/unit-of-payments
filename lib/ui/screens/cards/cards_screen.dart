@@ -13,7 +13,7 @@ class CardsScreen extends ConsumerWidget {
   const CardsScreen({super.key});
 
   static const String routeName = 'cards';
-  static const String routePath = '/';
+  static const String routePath = '/cards';
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     // Captured before the await: the sheet closing is an async gap and the
