@@ -7,6 +7,7 @@ import '../../services/notifications/notification_log_service.dart';
 import '../../services/notifications/notification_scheduler.dart';
 import '../auth/auth_provider.dart';
 import '../dashboard/dashboard_provider.dart';
+import '../profile/profile_provider.dart';
 
 /// Reschedules whenever the upcoming set changes. Watching the provider rather
 /// than calling the scheduler from each edit means no write path can forget to.
@@ -17,6 +18,10 @@ final FutureProvider<int> notificationSyncProvider = FutureProvider<int>((
     await LocalNotificationService.cancelAll();
     return 0;
   }
+  // Awaited before scheduling, not merely watched: the profile is what sets
+  // the timezone, and a reminder scheduled against the wrong one fires at the
+  // wrong hour.
+  await ref.watch(profileProvider.future);
   final List<SubscriptionModel> upcoming = await ref.watch(
     upcomingProvider.future,
   );

@@ -1,17 +1,37 @@
 import 'package:intl/intl.dart';
 
-/// Money and date formatting for es-MX. One place, so the app cannot drift
-/// into three different ways of writing the same amount.
+import '../../data/models/profile/profile_model.dart';
+
+/// Money and date formatting. One place, so the app cannot drift into three
+/// different ways of writing the same amount.
+///
+/// The currency is set once from the profile, the same way `Intl.defaultLocale`
+/// is. Threading it through every widget that prints a number would be a lot of
+/// plumbing for a value that changes about once in an account's life.
 class MoneyHelper {
   const MoneyHelper._();
 
-  static final NumberFormat _currency = NumberFormat.currency(
-    locale: 'es_MX',
-    symbol: r'$',
-    decimalDigits: 2,
-  );
+  static SupportedCurrency _currency = SupportedCurrency.mxn;
+  static NumberFormat _format = _formatFor(SupportedCurrency.mxn);
 
-  static String amount(double value) => _currency.format(value);
+  static SupportedCurrency get currency => _currency;
+
+  static void configure(SupportedCurrency currency) {
+    if (currency == _currency) {
+      return;
+    }
+    _currency = currency;
+    _format = _formatFor(currency);
+  }
+
+  static NumberFormat _formatFor(SupportedCurrency currency) =>
+      NumberFormat.currency(
+        locale: 'es_MX',
+        symbol: currency.symbol,
+        decimalDigits: 2,
+      );
+
+  static String amount(double value) => _format.format(value);
 
   static final DateFormat _shortDate = DateFormat('d MMM', 'es_MX');
   static final DateFormat _longDate = DateFormat('d MMMM y', 'es_MX');

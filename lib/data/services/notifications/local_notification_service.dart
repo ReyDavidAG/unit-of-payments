@@ -5,6 +5,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../models/profile/profile_model.dart';
+
 /// Device-side scheduling. No push service, no server: renewal dates are
 /// deterministic and known the moment a subscription is created.
 class LocalNotificationService {
@@ -25,6 +27,31 @@ class LocalNotificationService {
   static const int hourOfDay = 9;
 
   static bool _ready = false;
+  static String _timezone = ProfileModel.defaultTimezone;
+
+  static bool _zonesLoaded = false;
+
+  /// Reminders fire on the wall clock the person actually lives on. Falls back
+  /// to the default when the zone name is not one the tz database knows —
+  /// including the case where the fallback itself is unavailable, because a
+  /// throw here would stop scheduling for every subscription.
+  static void configureTimezone(String name) {
+    if (!_zonesLoaded) {
+      tz_data.initializeTimeZones();
+      _zonesLoaded = true;
+    }
+    for (final String candidate in [name, ProfileModel.defaultTimezone]) {
+      try {
+        tz.setLocalLocation(tz.getLocation(candidate));
+        _timezone = candidate;
+        return;
+      } on Object {
+        continue;
+      }
+    }
+  }
+
+  static String get timezone => _timezone;
 
   /// Returns false when the platform side is unavailable — most often a hot
   /// restart after the plugin was added, where the native registrant has not
@@ -33,9 +60,7 @@ class LocalNotificationService {
     if (_ready) {
       return true;
     }
-    tz_data.initializeTimeZones();
-    // ponytail: fixed zone, swap for profiles.timezone when settings exist.
-    tz.setLocalLocation(tz.getLocation('America/Mexico_City'));
+    configureTimezone(_timezone);
 
     _ready = await _guard('initialize', () async {
       await _plugin.initialize(

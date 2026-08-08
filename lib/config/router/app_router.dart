@@ -9,6 +9,7 @@ import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
 import '../../ui/screens/dashboard/dashboard_screen.dart';
 import '../../ui/screens/notifications/notification_history_screen.dart';
+import '../../ui/screens/profile/profile_screen.dart';
 import '../../ui/screens/shell/app_shell_screen.dart';
 import '../../ui/screens/subscriptions/subscriptions_screen.dart';
 
@@ -32,6 +33,11 @@ class AppRouter {
         builder: (context, state) => const SignUpScreen(),
       ),
       // One navigator per branch, so each tab keeps its own scroll position.
+      GoRoute(
+        path: ProfileScreen.routePath,
+        name: ProfileScreen.routeName,
+        builder: (context, state) => const ProfileScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShellScreen(navigationShell: navigationShell),
