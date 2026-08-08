@@ -35,10 +35,10 @@ class AppColors {
   // second red is a destructive action nobody can tell apart from a marker.
   static const Color dangerDark = Color(0xFFEA0C9B);
 
-  /// The only colours a card alias may take. Six, not eight: the eight-hue
-  /// set at constant lightness collapsed under colour-vision deficiency
-  /// (amber vs olive read as the same colour). These alternate lightness as
-  /// well as hue, and pass the categorical checks against both papers.
+  /// The only colours a card alias may take. Six base swatches, plus two
+  /// added per request: morado (Nu) and amarillo (Mercado Pago). The base
+  /// six alternate lightness to pass CVD checks; the two additions sit
+  /// at the heavier-lightness slots so the pattern still reads.
   /// Hues 20-45 stay reserved for the accent.
   static const Map<String, Color> cardSwatches = {
     'amber': Color(0xFFD57700),
@@ -47,6 +47,8 @@ class AppColors {
     'cyan': Color(0xFF0CA3BE),
     'indigo': Color(0xFF494ECF),
     'pink': Color(0xFFDC58B7),
+    'morado': Color(0xFF7B2D9E),
+    'amarillo': Color(0xFFD9A52A),
   };
 
   static const Color defaultSwatch = Color(0xFF494ECF);

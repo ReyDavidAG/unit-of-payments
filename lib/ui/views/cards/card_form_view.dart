@@ -5,6 +5,7 @@ import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../widgets/cards/card_brand_picker_widget.dart';
+import '../../widgets/cards/card_swatch_picker_widget.dart';
 
 /// Create or edit a card alias, in a bottom sheet. Returns the built model,
 /// or null when dismissed. Persisting is the caller's job.
@@ -110,6 +111,13 @@ class _CardFormViewState extends State<CardFormView> {
               CardBrandPickerWidget(
                 selected: _brand,
                 onSelected: (brand) => setState(() => _brand = brand),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Color', style: theme.textTheme.labelLarge),
+              const SizedBox(height: AppSpacing.sm),
+              CardSwatchPickerWidget(
+                selected: _color,
+                onSelected: (color) => setState(() => _color = color),
               ),
               const SizedBox(height: AppSpacing.lg),
               Row(
