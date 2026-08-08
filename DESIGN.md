@@ -53,22 +53,35 @@ cool greys is the mismatch nobody can name but everybody sees.
 
 ### Dark
 
+Its own palette, not an inverted light one. Taken from Hallmark's Wayfare
+example (`Manifesto-dark`): warm anchor at hue 60, ink drifting to 80, and a
+bleed-red accent at 25 in place of the light theme's coral.
+
 | Token | OKLCH | Hex |
 |---|---|---|
-| `paper` | `oklch(15% 0.012 40)` | `#100908` |
-| `surface` | `oklch(18.5% 0.013 40)` | `#18110E` |
-| `surface2` | `oklch(22% 0.014 40)` | `#211816` |
-| `rule` | `oklch(31% 0.013 40)` | `#362E2B` |
-| `neutral` | `oklch(62% 0.012 40)` | `#8D8481` |
-| `muted` | `oklch(76% 0.010 40)` | `#B7AFAC` |
-| `ink` | `oklch(94% 0.008 40)` | `#F0E9E7` |
-| `accent` | `oklch(72% 0.14 32)` | `#EF816B` |
-| `accentInk` | `oklch(86% 0.07 32)` | `#FBC1B5` |
-| `focus` | `oklch(74% 0.15 32)` | `#FB836D` |
-| `danger` | `oklch(66% 0.16 18)` | `#E3636C` |
+| `paper` | `oklch(13% 0.010 60)` | `#0A0704` |
+| `surface` | `oklch(18% 0.012 60)` | `#16100C` |
+| `surface2` | `oklch(24% 0.014 60)` | `#241E19` |
+| `rule` | `oklch(28% 0.012 60)` | `#2D2823` |
+| `neutral` | `oklch(62% 0.014 70)` | `#8C857D` |
+| `muted` | `oklch(80% 0.012 80)` | `#C2BDB5` |
+| `ink` | `oklch(96% 0.010 80)` | `#F5F1EA` |
+| `accent` | `oklch(66% 0.225 25)` | `#FE4145` |
+| `accentInk` | `oklch(80% 0.110 25)` | `#FDA19A` |
+| `focus` | `oklch(78% 0.165 70)` | `#F9A216` |
+| `danger` | `oklch(62% 0.255 350)` | `#EA0C9B` |
 
-The hue never changes between modes. Only lightness and chroma move, and elevation goes *lighter* in
-dark mode, never darker.
+Chroma is clamped to what sRGB can hold. The source is CSS `oklch`, which a
+browser gamut-maps on the fly; Flutter ships literal ARGB, so the values here
+are the highest in-gamut chroma at each lightness rather than the source
+numbers.
+
+**Danger is magenta in dark mode, red in light.** The dark accent *is* red, and
+a destructive action in a second red is one nobody can tell apart from an
+attention marker. Measured separation against the accent: ΔE 15.2 normal,
+14.2 deuteran.
+
+Elevation still goes lighter, never darker.
 
 ### Measured contrast
 
