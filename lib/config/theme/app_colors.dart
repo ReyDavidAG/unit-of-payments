@@ -18,18 +18,22 @@ class AppColors {
   static const Color focus = Color(0xFFC8331A);
   static const Color danger = Color(0xFFBD1F3D);
 
-  // Dark. Same hue, only lightness and chroma move.
-  static const Color paperDark = Color(0xFF100908);
-  static const Color surfaceDark = Color(0xFF18110E);
-  static const Color surface2Dark = Color(0xFF211816);
-  static const Color ruleDark = Color(0xFF362E2B);
-  static const Color neutralDark = Color(0xFF8D8481);
-  static const Color mutedDark = Color(0xFFB7AFAC);
-  static const Color inkDark = Color(0xFFF0E9E7);
-  static const Color accentDark = Color(0xFFEF816B);
-  static const Color accentInkDark = Color(0xFFFBC1B5);
-  static const Color focusDark = Color(0xFFFB836D);
-  static const Color dangerDark = Color(0xFFE3636C);
+  // Dark. Wayfare's Manifesto-dark palette: warm anchor at hue 60, bleed-red
+  // accent at 25. Chroma is clamped to what sRGB can hold — the source is CSS
+  // oklch, which the browser gamut-maps and Flutter cannot.
+  static const Color paperDark = Color(0xFF0A0704);
+  static const Color surfaceDark = Color(0xFF16100C);
+  static const Color surface2Dark = Color(0xFF241E19);
+  static const Color ruleDark = Color(0xFF2D2823);
+  static const Color neutralDark = Color(0xFF8C857D);
+  static const Color mutedDark = Color(0xFFC2BDB5);
+  static const Color inkDark = Color(0xFFF5F1EA);
+  static const Color accentDark = Color(0xFFFE4145);
+  static const Color accentInkDark = Color(0xFFFDA19A);
+  static const Color focusDark = Color(0xFFF9A216);
+  // Magenta, not red: the accent is now red, and a destructive action in a
+  // second red is a destructive action nobody can tell apart from a marker.
+  static const Color dangerDark = Color(0xFFEA0C9B);
 
   /// The only colours a card alias may take. Six, not eight: the eight-hue
   /// set at constant lightness collapsed under colour-vision deficiency
