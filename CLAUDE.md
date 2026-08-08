@@ -22,7 +22,14 @@ flutter pub get                              # install dependencies
 flutter run --dart-define-from-file=.env     # run on a device/emulator
 flutter test                                 # unit + widget tests
 ./scripts/format.sh                          # dart format + flutter analyze  <-- run at the end of EVERY change
+
+flutter build appbundle --release --dart-define-from-file=.env   # the Play upload
 ```
+
+**The `--dart-define-from-file=.env` is not optional on a release build.** Without it the
+credentials compile to empty strings and the app throws `StateError` on its first frame — it
+builds, signs and uploads perfectly, and every install is dead. Signing comes from
+`android/key.properties`, which is gitignored and points at a keystore kept outside the repo.
 
 Database migrations go through an explicit `--db-url`. `supabase link` is broken in CLI 2.112
 (it crashes parsing `inserted_at` from the API), and without it `db push` never learns the IPv4
