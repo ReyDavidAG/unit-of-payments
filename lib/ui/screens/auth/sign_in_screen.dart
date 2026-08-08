@@ -7,6 +7,7 @@ import '../../views/auth/password_reset_view.dart';
 import '../../widgets/auth/auth_form_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/theme_toggle_button.dart';
+import '../../widgets/common/version_label_widget.dart';
 import 'sign_up_screen.dart';
 
 /// Sign in. The cascade logo is the hero: three stacked payment cards
@@ -109,6 +110,8 @@ class SignInScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                    const VersionLabelWidget(),
                   ],
                 ),
               ),

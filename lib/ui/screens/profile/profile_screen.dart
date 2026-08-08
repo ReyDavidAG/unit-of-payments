@@ -11,6 +11,7 @@ import '../../../data/providers/theme/theme_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/profile/change_password_view.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/version_label_widget.dart';
 import '../../widgets/profile/account_actions.dart';
 import '../../widgets/profile/identity_header.dart';
 import '../../widgets/profile/sign_out_dialog.dart';
@@ -86,6 +87,8 @@ class ProfileScreen extends ConsumerWidget {
             onChangePassword: () => ChangePasswordView.show(context),
             onSignOut: () => _confirmSignOut(context, email),
           ),
+          const SizedBox(height: AppSpacing.lg),
+          const VersionLabelWidget(),
         ],
       ),
     );
