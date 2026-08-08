@@ -18,7 +18,10 @@ migrate_working_dir/
 *.iws
 .idea/
 
-.vscode/
+.vscode/*
+# Committed: without it the run button skips --dart-define-from-file and the
+# app dies on a missing SUPABASE_URL.
+!.vscode/launch.json
 .fleet/
 .zed/
 
