@@ -99,27 +99,32 @@ label. Coral on paper measures 3.60, which is fine for a boundary and wrong for 
 ### Card swatches
 
 `cards.color` is user data, and user-chosen colours are the single fastest way to destroy a palette.
-The picker offers **only these eight**, all at `oklch(62% · in-gamut C · H)` so no swatch outranks
-another and every one clears 3:1 against both papers:
+The picker offers **only these six** and nothing else — no free picker, no hex field.
 
-| Name | Hex | Light | Dark |
-|---|---|---|---|
-| Amber | `#C46D01` | 3.46 | 5.20 |
-| Olive | `#988710` | 3.30 | 5.46 |
-| Green | `#4D9C3A` | 3.12 | 5.76 |
-| Teal | `#0F9B89` | 3.16 | 5.70 |
-| Cyan | `#1195B4` | 3.20 | 5.62 |
-| Blue | `#4B84E2` | 3.36 | 5.35 |
-| Violet | `#956DD4` | 3.54 | 5.09 |
-| Magenta | `#C15CA3` | 3.60 | 5.00 |
+| Name | Hex | OKLCH |
+|---|---|---|
+| Ámbar | `#D57700` | `oklch(66% 0.155 60)` |
+| Verde | `#227405` | `oklch(49% 0.155 140)` |
+| Cian | `#0CA3BE` | `oklch(66% 0.115 215)` |
+| Índigo | `#494ECF` | `oklch(50% 0.195 275)` |
+| Rosa | `#DC58B7` | `oklch(66% 0.195 340)` |
+| Olivo | `#686800` | `oklch(50% 0.11 110)` |
 
-Hues 20–45 are reserved — a card swatch in coral would read as an accent mark. No free colour picker,
-no hex field.
+**Six, not eight, and the lightness alternates.** An earlier set used eight hues at a constant
+`L 62`. It failed the categorical colour checks outright: amber against olive measured ΔE 1.1 under
+deuteranopia — the same colour to a red-green colourblind reader — and teal against cyan measured
+ΔE 7.4 under *normal* vision. Constant lightness with only hue varying is exactly what produces
+that. Alternating lightness carries the separation that hue alone cannot.
 
-> ⚠️ `cards.color` defaults to `#4A5568` in the migration. That is a cool slate and it clashes with
-> this palette. Change the default to `#4B84E2` before the schema is applied.
+Verified with a validator, not by eye: both papers pass the lightness band, the chroma floor,
+adjacent-pair CVD separation (worst 8.8 protan) and the normal-vision floor (worst 23.3). One set
+serves both modes.
 
----
+Three swatches fall below 3:1 against the card surface, which obligates relief: **a swatch never
+appears without its alias in text beside it**, and the proportion bar is always paired with the
+per-card list that names and totals each segment. Colour is never the only carrier of identity.
+
+Hues 20–45 are reserved — a card swatch in coral would read as an interactive accent mark.
 
 ## 3. Typography
 

@@ -7,6 +7,7 @@ import '../../data/services/supabase/supabase_service.dart';
 import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
+import '../../ui/screens/dashboard/dashboard_screen.dart';
 import '../../ui/screens/shell/app_shell_screen.dart';
 import '../../ui/screens/subscriptions/subscriptions_screen.dart';
 
@@ -16,7 +17,7 @@ class AppRouter {
   const AppRouter._();
 
   static final GoRouter router = GoRouter(
-    initialLocation: SubscriptionsScreen.routePath,
+    initialLocation: DashboardScreen.routePath,
     refreshListenable: _AuthNotifier(),
     routes: [
       GoRoute(
@@ -34,6 +35,15 @@ class AppRouter {
         builder: (context, state, navigationShell) =>
             AppShellScreen(navigationShell: navigationShell),
         branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: DashboardScreen.routePath,
+                name: DashboardScreen.routeName,
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -65,7 +75,7 @@ class AppRouter {
         return SignInScreen.routePath;
       }
       if (signedIn && onAuthScreen) {
-        return SubscriptionsScreen.routePath;
+        return DashboardScreen.routePath;
       }
       return null;
     },

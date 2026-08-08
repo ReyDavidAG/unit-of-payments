@@ -1,4 +1,5 @@
 import '../../models/cards/card_model.dart';
+import '../../models/cards/card_total_model.dart';
 import '../supabase/supabase_service.dart';
 
 /// Card queries. No user_id filter anywhere: RLS scopes every row to the
@@ -15,6 +16,16 @@ class CardService {
         .eq('archived', false)
         .order('alias');
     return rows.map(CardModel.fromJson).toList();
+  }
+
+  /// Monthly cost per alias, summed and normalized by Postgres. Recomputing
+  /// this in Dart would mean a second implementation of monthly_amount.
+  static Future<List<CardTotalModel>> fetchTotals() async {
+    final List<Map<String, dynamic>> rows = await SupabaseService.client
+        .from('v_card_totals')
+        .select()
+        .order('monthly_total', ascending: false);
+    return rows.map(CardTotalModel.fromJson).toList();
   }
 
   static Future<CardModel> create(CardModel card) async {

@@ -31,20 +31,21 @@ class AppColors {
   static const Color focusDark = Color(0xFFFB836D);
   static const Color dangerDark = Color(0xFFE3636C);
 
-  /// The only colours a card alias may take. Hues 20-45 are reserved for the
-  /// accent, so a swatch can never be mistaken for an interactive mark.
+  /// The only colours a card alias may take. Six, not eight: the eight-hue
+  /// set at constant lightness collapsed under colour-vision deficiency
+  /// (amber vs olive read as the same colour). These alternate lightness as
+  /// well as hue, and pass the categorical checks against both papers.
+  /// Hues 20-45 stay reserved for the accent.
   static const Map<String, Color> cardSwatches = {
-    'amber': Color(0xFFC46D01),
-    'olive': Color(0xFF988710),
-    'green': Color(0xFF4D9C3A),
-    'teal': Color(0xFF0F9B89),
-    'cyan': Color(0xFF1195B4),
-    'blue': Color(0xFF4B84E2),
-    'violet': Color(0xFF956DD4),
-    'magenta': Color(0xFFC15CA3),
+    'amber': Color(0xFFD57700),
+    'olive': Color(0xFF686800),
+    'green': Color(0xFF227405),
+    'cyan': Color(0xFF0CA3BE),
+    'indigo': Color(0xFF494ECF),
+    'pink': Color(0xFFDC58B7),
   };
 
-  static const Color defaultSwatch = Color(0xFF4B84E2);
+  static const Color defaultSwatch = Color(0xFF494ECF);
 
   /// The storage format for `cards.color`. Uppercase `#RRGGBB`, which is what
   /// the database CHECK constraint expects.

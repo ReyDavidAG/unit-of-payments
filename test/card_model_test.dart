@@ -24,7 +24,7 @@ void main() {
       id: 'some-uuid',
       alias: 'BBVA Oro',
       brand: CardBrand.visa,
-      color: '#4B84E2',
+      color: '#494ECF',
       last4: '1234',
       cutoffDay: 15,
     );
