@@ -1,7 +1,7 @@
 name: unit_of_payments
 description: "Notifies you of upcoming payments and shows all your subscriptions in one place."
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.12.0
