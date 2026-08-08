@@ -409,6 +409,8 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 | 10 | `feature/theme-mode` | Selector claro / oscuro / sistema con persistencia local, paleta oscura Wayfare ✅ |
 | 11 | `feature/animations` | Envoltorios de movimiento, skeletons por pantalla, shell con swipe entre tabs ✅ |
 | 12 | `feature/app-icon-and-splash` | Icono, splash, marca Vence, WebPs de marca de tarjeta, identidad cromática por tab ✅ |
+| 13 | `feature/mob-debpts` | **Base de datos**: MSI, deuda de terceros, fecha límite de pago y estado de cuenta por tarjeta ✅ aplicado, advisors en cero |
+| 13.1 | `feature/mob-debpts` | **Capa Flutter**: modelos, formularios de MSI y de día límite, progreso en la lista, corte y reembolsos en el resumen ✅ |
 
 Las fases 1 y 2 no tocan Dart. La 3 no se empieza hasta que la 1 esté probada: si el esquema cambia
 después, se rehace el cliente.
@@ -435,5 +437,15 @@ configurados en GitHub, así que el workflow de keep-alive nunca ha corrido.
 
 Compartir suscripciones entre usuarios, exportar a CSV, cobro real o vinculación bancaria,
 presupuestos, widgets de home screen, modo web/escritorio.
+
+Descartado a propósito al diseñar los MSI:
+
+- **Tabla de gastos generales o "saldo de la tarjeta".** La app solo conoce la deuda que le
+  contaron. Un campo de saldo estaría mal desde el primer café comprado fuera de la app, y un número
+  equivocado es peor que uno ausente.
+- **Una fila por mensualidad.** Doce renglones para representar lo que dos fechas ya dicen.
+- **Reembolso parcial** (*"me paga la mitad"*). Exige separar `amount` de lo adeudado; se agrega
+  cuando haga falta.
+- **MSI con intereses.** No son MSI.
 
 Ninguna de estas cambia el esquema de forma incompatible, así que no se diseña para ellas hoy.

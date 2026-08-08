@@ -287,13 +287,34 @@ isn't a real loading indicator. If you can't say what a transition communicates,
   in Geist Mono. The card colour is a 3 px left bar, never a filled tile.
 - **Card total** — alias in `titleMedium`, monthly total in `displayAmount`. The swatch is a small
   square beside the alias, not a background.
+- **Installment form** — the user is asked for the **price and the term**, because that is how the
+  promotion is sold and how they remember it. The monthly charge is computed and shown back
+  (`12 pagos de $833.33`), never typed. The term is a set of chips with an `Otro` escape, matching how
+  the custom billing cycle already works — nobody should type `12` into a field for the one number
+  that only ever takes a handful of values.
+- **Installment row** — the same subscription row, with the cycle position replaced by progress:
+  `MSI 3 de 12 · BBVA`. *"Mensual"* is true of an installment plan and useless on it. The peso figure
+  still owed is **not** here — it belongs to the card total and the statement, where it can be summed.
+- **Statement card** — alias and deadline on the left, statement total right in mono. The deadline
+  carries the semantic tint by proximity, same scale as a charge. When the card has no due day it
+  says so and names the missing field instead of showing a date it cannot know.
+- **Reimbursement** — a charge someone else repays appends `Juan te paga` to the meta line, and the
+  statement shows what is left after reimbursements. Never a badge, never a second colour.
 - **Primary button** — `primary` fill, `paper` label, Geist 500, `radiusCard`, full width on forms only.
 - **Secondary button** — `primary` 1 px outline, `primary` label, transparent fill.
 - **Destructive** — `danger` text on transparent, never a filled red button. Confirm with an undo
   snackbar where the action is reversible, a dialog only where it is not.
 - **Empty state** — one sentence in `bodyLarge` `muted` and one button. No illustration, no icon balloon.
+- **Error state** — the same shape, with the button reading `Reintentar`. It scrolls, so pull-to-refresh
+  keeps working while it is on screen, and it never shows a code, a stack trace or a raw driver
+  message. One widget owns this: [error_retry_widget.dart](lib/ui/widgets/common/error_retry_widget.dart).
 - **Skeleton** — shimmer over `surface2`/`surface` (light) or `surface`/`surface2` (dark), shaped like
   the content it replaces. Never a spinner where a skeleton fits.
+- **Segmented control** — a hairline `rule` outline at `radiusInput`, the selected segment washed in
+  `primary` at 15% with an `ink` label, the rest transparent with a `muted` one. Same selection wash as
+  a chip, so a form that carries both does not speak two languages. **Never the raw accent as a fill** —
+  that is what Material does when the control is left unthemed, and it is a banned block of colour.
+  48 px tall, because a segment is a tap target before it is a label.
 - **Focus** — a 2 px `primary` ring, always visible, **never animated in**.
 
 Every interactive widget ships all its states: default, pressed, focused, disabled, loading, error.
