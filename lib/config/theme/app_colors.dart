@@ -76,6 +76,15 @@ class AppColors {
   static const Color warningDark = Color(0xFFF5C842);
   static const Color criticalDark = Color(0xFFF77890);
 
+  /// Days until a charge or a deadline, mapped to the semantic palette. Null
+  /// means "no tint" — the default muted copy. Escalates with proximity.
+  static Color? urgency(int days, {required bool isDark}) {
+    if (days <= 3) return isDark ? criticalDark : critical;
+    if (days <= 6) return isDark ? warningDark : warning;
+    if (days <= 13) return isDark ? successDark : success;
+    return null;
+  }
+
   /// The only colours a card alias may take. Six base swatches, plus two
   /// added per request: morado (Nu) and amarillo (Mercado Pago). The base
   /// six alternate lightness to pass CVD checks; the two additions sit
@@ -112,4 +121,19 @@ class AppColors {
     final Color parsed = Color(0xFF000000 | value);
     return cardSwatches.values.contains(parsed) ? parsed : defaultSwatch;
   }
+}
+
+/// Brightness-aware semantic palette. Each getter returns the dark variant
+/// in dark mode and the light variant otherwise, so chips and field borders
+/// keep the same hue family on either side of the theme switch.
+extension SemanticPalette on ThemeData {
+  Color get info =>
+      brightness == Brightness.dark ? AppColors.infoDark : AppColors.info;
+  Color get warning =>
+      brightness == Brightness.dark ? AppColors.warningDark : AppColors.warning;
+  Color get success =>
+      brightness == Brightness.dark ? AppColors.successDark : AppColors.success;
+  Color get critical => brightness == Brightness.dark
+      ? AppColors.criticalDark
+      : AppColors.critical;
 }

@@ -173,6 +173,39 @@ class AppTheme {
           borderSide: BorderSide(color: danger),
         ),
       ),
+      // Untheme this and Material fills the selected segment with
+      // colorScheme.secondaryContainer, which defaults to secondary — the raw
+      // accent, as a full-width block. Banned by the accent budget, and it made
+      // segments and chips speak two different selection languages on one form.
+      // They now say the same thing: a 15% primary wash, ink label, hairline
+      // rule, radiusInput.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? primary.withValues(alpha: 0.15)
+                : Colors.transparent,
+          ),
+          // Ink against muted is the signal that survives a tinted fill; the
+          // wash alone would be too quiet to carry selection on its own.
+          // Muted, never neutral: an unselected segment is a 13px label and
+          // neutral only clears contrast at 24px and up.
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? ink : muted,
+          ),
+          overlayColor: WidgetStateProperty.all(surface2),
+          side: WidgetStateProperty.all(BorderSide(color: rule)),
+          textStyle: WidgetStateProperty.all(text.labelLarge),
+          // 48 high: a segment is a tap target before it is a label.
+          minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: inputRadius),
+          ),
+        ),
+      ),
       chipTheme: ChipThemeData(
         backgroundColor: surface,
         selectedColor: primary.withValues(alpha: 0.15),
