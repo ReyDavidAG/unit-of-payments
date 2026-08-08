@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/cards/card_total_model.dart';
 import '../../models/subscriptions/subscription_model.dart';
 import '../../services/cards/card_service.dart';
+import '../../services/subscriptions/subscription_service.dart';
 import '../auth/auth_provider.dart';
 import '../cards/cards_provider.dart';
 import '../subscriptions/subscriptions_provider.dart';
@@ -49,4 +50,15 @@ final Provider<CardTotalModel?> uncardedTotalProvider =
                   earliest == null || date.isBefore(earliest) ? date : earliest,
             ),
       );
+    });
+
+/// Charges due in the next 30 days. `v_upcoming` already filters and orders
+/// them, so this is a read, not a client-side scan of every subscription.
+final FutureProvider<List<SubscriptionModel>> upcomingProvider =
+    FutureProvider<List<SubscriptionModel>>((ref) async {
+      ref.watch(subscriptionsProvider);
+      if (ref.watch(currentUserIdProvider) == null) {
+        return const [];
+      }
+      return SubscriptionService.fetchUpcoming();
     });

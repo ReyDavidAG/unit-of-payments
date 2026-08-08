@@ -7,6 +7,7 @@ class SubscriptionService {
   const SubscriptionService._();
 
   static const String _view = 'v_subscriptions';
+  static const String _upcomingView = 'v_upcoming';
   static const String _table = 'subscriptions';
 
   static Future<List<SubscriptionModel>> fetchActive() async {
@@ -14,6 +15,14 @@ class SubscriptionService {
         .from(_view)
         .select()
         .order('next_charge_date');
+    return rows.map(SubscriptionModel.fromJson).toList();
+  }
+
+  /// Charges due in the next 30 days, filtered and ordered by Postgres.
+  static Future<List<SubscriptionModel>> fetchUpcoming() async {
+    final List<Map<String, dynamic>> rows = await SupabaseService.client
+        .from(_upcomingView)
+        .select();
     return rows.map(SubscriptionModel.fromJson).toList();
   }
 

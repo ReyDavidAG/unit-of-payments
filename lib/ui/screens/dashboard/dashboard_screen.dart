@@ -5,10 +5,13 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
 import '../../../data/models/cards/card_total_model.dart';
+import '../../../data/models/subscriptions/subscription_model.dart';
 import '../../../data/providers/dashboard/dashboard_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
+import '../../widgets/dashboard/spend_split_widget.dart';
+import '../../widgets/dashboard/upcoming_charge_widget.dart';
 
 /// The one screen that answers "what am I paying, and on what".
 class DashboardScreen extends ConsumerWidget {
@@ -21,6 +24,9 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<CardTotalModel>> totals = ref.watch(
       cardTotalsProvider,
+    );
+    final AsyncValue<List<SubscriptionModel>> upcoming = ref.watch(
+      upcomingProvider,
     );
     final CardTotalModel? uncarded = ref.watch(uncardedTotalProvider);
     final DateTime today = DateTime.now();
@@ -40,7 +46,8 @@ class DashboardScreen extends ConsumerWidget {
         onRefresh: () async {
           ref
             ..invalidate(subscriptionsProvider)
-            ..invalidate(cardTotalsProvider);
+            ..invalidate(cardTotalsProvider)
+            ..invalidate(upcomingProvider);
           await ref.read(cardTotalsProvider.future);
         },
         child: ListView(
@@ -54,13 +61,9 @@ class DashboardScreen extends ConsumerWidget {
               AsyncLoading() => const [
                 Center(child: CircularProgressIndicator()),
               ],
-              _ => _breakdown(
-                totals.value ?? const [],
-                uncarded,
-                today,
-                Theme.of(context).textTheme.labelSmall,
-              ),
+              _ => _breakdown(totals.value ?? const [], uncarded, today),
             },
+            ..._upcoming(upcoming.value ?? const [], today),
           ],
         ),
       ),
@@ -71,7 +74,6 @@ class DashboardScreen extends ConsumerWidget {
     List<CardTotalModel> totals,
     CardTotalModel? uncarded,
     DateTime today,
-    TextStyle? labelStyle,
   ) {
     // A card with nothing charged to it is noise on this screen; it still
     // exists on the Tarjetas tab.
@@ -88,13 +90,76 @@ class DashboardScreen extends ConsumerWidget {
       ];
     }
     return [
-      Text('POR TARJETA', style: labelStyle),
+      SpendSplitWidget(totals: rows),
+      if (rows.length >= 2) const SizedBox(height: AppSpacing.lg),
+      const _SectionLabel('POR TARJETA'),
       const SizedBox(height: AppSpacing.sm),
       for (final CardTotalModel total in rows) ...[
         CardTotalWidget(total: total, today: today),
         const SizedBox(height: AppSpacing.listGap),
       ],
     ];
+  }
+
+  List<Widget> _upcoming(List<SubscriptionModel> items, DateTime today) {
+    final List<SubscriptionModel> dated = items
+        .where((item) => item.nextChargeDate != null)
+        .toList();
+    if (dated.isEmpty) {
+      return const [];
+    }
+    final double sum = dated.fold(0, (total, item) => total + item.amount);
+    return [
+      const SizedBox(height: AppSpacing.sectionGap),
+      const _SectionLabel('PRÓXIMOS 30 DÍAS'),
+      const SizedBox(height: AppSpacing.sm),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          child: Column(
+            children: [
+              for (final SubscriptionModel item in dated)
+                UpcomingChargeWidget(subscription: item, today: today),
+              const Divider(height: AppSpacing.lg),
+              _Total(sum),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+}
+
+/// Uppercase micro-label. Reads from labelSmall so the tracking stays in one
+/// place rather than being retyped per section.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(text, style: Theme.of(context).textTheme.labelSmall);
+}
+
+class _Total extends StatelessWidget {
+  const _Total(this.value);
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Total', style: theme.textTheme.labelLarge),
+        Text(
+          MoneyHelper.amount(value),
+          style: AppTypography.amount(theme.colorScheme.onSurface),
+        ),
+      ],
+    );
   }
 }
 
@@ -107,10 +172,7 @@ class _MonthlyTotal extends ConsumerWidget {
     final double total = ref.watch(monthlyTotalProvider);
 
     return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.xs,
-        bottom: AppSpacing.sectionGap,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
