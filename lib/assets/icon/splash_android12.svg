@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vence splash icon for Android 12">
+  <title>Vence — Android 12 splash</title>
+  <!-- Android 12 renders the splash inside a circular inset (~160 dp on a
+       typical phone). The cascade used to fill the canvas and got clipped;
+       now it occupies ~45% so the system mask clears the chip and the
+       right-edge ink mark on every device. -->
+
+  <g id="card-back">
+    <rect x="136" y="196" width="240" height="120" rx="14" ry="14" fill="#5B2C6F"/>
+  </g>
+  <g id="card-mid">
+    <rect x="152" y="212" width="240" height="120" rx="14" ry="14" fill="#1E4D6B"/>
+  </g>
+  <g id="card-front">
+    <rect x="168" y="228" width="240" height="120" rx="14" ry="14" fill="#C19A3F"/>
+    <g id="chip">
+      <rect x="188" y="248" width="36" height="28" rx="4" ry="4" fill="#8B6A2E"/>
+      <line x1="188" y1="256" x2="224" y2="256" stroke="#C19A3F" stroke-width="1"/>
+      <line x1="188" y1="266" x2="224" y2="266" stroke="#C19A3F" stroke-width="1"/>
+      <line x1="206" y1="248" x2="206" y2="276" stroke="#C19A3F" stroke-width="1"/>
+    </g>
+    <rect x="392" y="248" width="3" height="84" rx="1.5" ry="1.5" fill="#1C1411" fill-opacity="0.35"/>
+  </g>
+</svg>
