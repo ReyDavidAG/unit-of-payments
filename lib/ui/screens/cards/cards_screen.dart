@@ -83,16 +83,7 @@ class CardsScreen extends ConsumerWidget {
     final AsyncValue<List<CardModel>> cards = ref.watch(cardsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tarjetas'),
-        actions: [
-          IconButton(
-            onPressed: SupabaseService.signOut,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Tarjetas')),
       floatingActionButton: cards.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(

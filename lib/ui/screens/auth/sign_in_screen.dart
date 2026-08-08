@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/services/supabase/supabase_service.dart';
+import '../../views/auth/password_reset_view.dart';
 import '../../widgets/auth/auth_form_widget.dart';
 import 'sign_up_screen.dart';
 
@@ -44,6 +45,13 @@ class SignInScreen extends StatelessWidget {
                 child: TextButton(
                   onPressed: () => context.goNamed(SignUpScreen.routeName),
                   child: const Text('Crear una cuenta'),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => PasswordResetView.show(context),
+                  child: const Text('Olvidé mi contraseña'),
                 ),
               ),
             ],

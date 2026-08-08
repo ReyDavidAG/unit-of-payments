@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
@@ -9,6 +10,7 @@ import '../../../data/models/subscriptions/subscription_model.dart';
 import '../../../data/providers/dashboard/dashboard_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
+import '../profile/profile_screen.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
 import '../../widgets/dashboard/spend_split_widget.dart';
 import '../../widgets/dashboard/upcoming_charge_widget.dart';
@@ -36,9 +38,9 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('Resumen'),
         actions: [
           IconButton(
-            onPressed: SupabaseService.signOut,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
+            onPressed: () => context.pushNamed(ProfileScreen.routeName),
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Perfil',
           ),
         ],
       ),

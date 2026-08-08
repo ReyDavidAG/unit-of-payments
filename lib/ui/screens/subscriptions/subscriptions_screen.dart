@@ -77,16 +77,7 @@ class SubscriptionsScreen extends ConsumerWidget {
     final DateTime today = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Suscripciones'),
-        actions: [
-          IconButton(
-            onPressed: SupabaseService.signOut,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Suscripciones')),
       floatingActionButton: subscriptions.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(
