@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unit_of_payments/config/theme/app_colors.dart';
 import 'package:unit_of_payments/config/theme/app_theme.dart';
+import 'package:unit_of_payments/data/models/subscriptions/subscription_model.dart';
+import 'package:unit_of_payments/ui/widgets/subscriptions/subscription_kind_selector_widget.dart';
 
 void main() {
   double contrast(Color a, Color b) {
@@ -75,12 +77,35 @@ void main() {
         );
       });
 
-      test('a segment is a 48px tap target', () {
+      test('the theme asks for a 48px tap target', () {
         expect(
           theme.segmentedButtonTheme.style?.minimumSize
               ?.resolve(<WidgetState>{})
               ?.height,
           48,
+        );
+      });
+
+      // The theme asking is not the same as the widget getting: a local
+      // visualDensity + shrinkWrap once collapsed this to a measured 32 while
+      // the token assertion above stayed green.
+      testWidgets('and the rendered segment actually gets it', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Center(
+                child: SubscriptionKindSelectorWidget(
+                  value: ChargeKind.subscription,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        );
+        expect(
+          tester.getSize(find.byType(SegmentedButton<ChargeKind>)).height,
+          greaterThanOrEqualTo(48),
         );
       });
     });
