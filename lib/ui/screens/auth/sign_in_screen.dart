@@ -24,17 +24,17 @@ class SignInScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.xl2),
-              Text('Sign in', style: theme.textTheme.headlineLarge),
+              Text('Iniciar sesión', style: theme.textTheme.headlineLarge),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Your subscriptions follow your account across devices.',
+                'Tus suscripciones te siguen en todos tus dispositivos.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
               AuthFormWidget(
-                submitLabel: 'Sign in',
+                submitLabel: 'Iniciar sesión',
                 onSubmit: (email, password) =>
                     SupabaseService.signIn(email: email, password: password),
               ),
@@ -43,7 +43,7 @@ class SignInScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => context.goNamed(SignUpScreen.routeName),
-                  child: const Text('Create an account'),
+                  child: const Text('Crear una cuenta'),
                 ),
               ),
             ],

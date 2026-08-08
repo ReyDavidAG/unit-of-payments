@@ -61,18 +61,18 @@ class _AuthFormWidgetState extends State<AuthFormWidget> {
   String? _validateEmail(String? value) {
     final String email = value?.trim() ?? '';
     if (email.isEmpty) {
-      return 'Enter your email.';
+      return 'Escribe tu correo.';
     }
     // Deliberately loose: the server and the inbox are the real validators.
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      return 'That does not look like an email.';
+      return 'Eso no parece un correo.';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if ((value ?? '').length < 6) {
-      return 'At least 6 characters.';
+      return 'Mínimo 6 caracteres.';
     }
     return null;
   }
@@ -92,7 +92,7 @@ class _AuthFormWidgetState extends State<AuthFormWidget> {
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Email'),
+            decoration: const InputDecoration(labelText: 'Correo'),
             validator: _validateEmail,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -102,7 +102,7 @@ class _AuthFormWidgetState extends State<AuthFormWidget> {
             obscureText: true,
             autofillHints: const [AutofillHints.password],
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(labelText: 'Password'),
+            decoration: const InputDecoration(labelText: 'Contraseña'),
             validator: _validatePassword,
             onFieldSubmitted: (_) => _submit(),
           ),

@@ -46,15 +46,17 @@ class SupabaseService {
   static String describeError(Object error) {
     if (error is AuthException) {
       return switch (error.code) {
-        'invalid_credentials' => 'Wrong email or password.',
-        'email_not_confirmed' => 'Confirm your email before signing in.',
+        'invalid_credentials' => 'Correo o contraseña incorrectos.',
+        'email_not_confirmed' => 'Confirma tu correo antes de iniciar sesión.',
         'user_already_exists' ||
-        'email_exists' => 'That email already has an account.',
-        'weak_password' => 'Password is too weak. Use at least 6 characters.',
-        'over_email_send_rate_limit' => 'Too many attempts. Try again shortly.',
+        'email_exists' => 'Ese correo ya tiene una cuenta.',
+        'weak_password' =>
+          'La contraseña es muy débil. Usa al menos 6 caracteres.',
+        'over_email_send_rate_limit' =>
+          'Demasiados intentos. Espera un momento.',
         _ => error.message,
       };
     }
-    return 'Something went wrong. Check your connection and try again.';
+    return 'Algo salió mal. Revisa tu conexión e inténtalo de nuevo.';
   }
 }

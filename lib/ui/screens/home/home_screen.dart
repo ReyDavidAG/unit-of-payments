@@ -25,14 +25,14 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             onPressed: SupabaseService.signOut,
             icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Text(
-          'Signed in as ${user?.email ?? 'unknown'}',
+          'Sesión iniciada como ${user?.email ?? 'desconocido'}',
           style: theme.textTheme.bodyLarge,
         ),
       ),

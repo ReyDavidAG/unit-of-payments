@@ -29,7 +29,7 @@ class SignUpScreen extends StatelessWidget {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Check your inbox to confirm your account.'),
+        content: Text('Revisa tu correo para confirmar tu cuenta.'),
       ),
     );
   }
@@ -46,17 +46,17 @@ class SignUpScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.xl2),
-              Text('Create an account', style: theme.textTheme.headlineLarge),
+              Text('Crear cuenta', style: theme.textTheme.headlineLarge),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Six characters is the minimum. Nothing else is required.',
+                'Seis caracteres como mínimo. Nada más.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
               AuthFormWidget(
-                submitLabel: 'Create account',
+                submitLabel: 'Crear cuenta',
                 onSubmit: (email, password) =>
                     _signUp(context, email, password),
               ),
@@ -65,7 +65,7 @@ class SignUpScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => context.goNamed(SignInScreen.routeName),
-                  child: const Text('I already have an account'),
+                  child: const Text('Ya tengo una cuenta'),
                 ),
               ),
             ],
