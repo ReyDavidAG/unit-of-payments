@@ -89,12 +89,16 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
 }
 
 /// Shell body wrapped in two motions: a horizontal-drag velocity trigger
-/// (flick left/right to switch tab) and an AnimatedSwitcher with a
-/// direction-aware slide. The Stack layoutBuilder keeps the outgoing and
-/// incoming tab on screen at the same time so the transition reads as
-/// one screen gluing into the next — the closest we can get to a
-/// PageView's drag-follows-finger without abandoning the StatefulShell
-/// model (each branch keeps its own Navigator and scroll position).
+/// (flick left/right to switch tab) and a Transform+Opacity slide driven
+/// by the previous-vs-current index.
+///
+/// Why not AnimatedSwitcher with a keyed subtree: the StatefulNavigationShell
+/// carries its own GlobalKey set by go_router. Wrapping it in a
+/// KeyedSubtree with a changing key made Flutter move the shell between
+/// parents within the same frame and trip the duplicate-GlobalKey
+/// assertion. Keeping the shell as a single, identity-stable child and
+/// animating it with Transform+Opacity sidesteps that and still reads
+/// as a fluid slide between tabs.
 class _BranchSlider extends StatefulWidget {
   const _BranchSlider({required this.shell});
 
@@ -107,14 +111,31 @@ class _BranchSlider extends StatefulWidget {
   State<_BranchSlider> createState() => _BranchSliderState();
 }
 
-class _BranchSliderState extends State<_BranchSlider> {
-  int _previousIndex = 0;
-  bool _forward = true;
+class _BranchSliderState extends State<_BranchSlider>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late int _previousIndex;
+  late bool _forward;
 
   @override
   void initState() {
     super.initState();
     _previousIndex = widget.shell.currentIndex;
+    _forward = true;
+    _controller = AnimationController(vsync: this, duration: AppMotion.long)
+      ..addStatusListener((status) {
+        // Snap to rest so the Transform doesn't keep the widget off-axis
+        // when the animation completes.
+        if (status == AnimationStatus.completed) {
+          setState(() {}); // rebuild at t=1, where the builder returns child
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -122,10 +143,9 @@ class _BranchSliderState extends State<_BranchSlider> {
     super.didUpdateWidget(old);
     final int current = widget.shell.currentIndex;
     if (current != _previousIndex) {
-      setState(() {
-        _forward = current > _previousIndex;
-        _previousIndex = current;
-      });
+      _forward = current > _previousIndex;
+      _previousIndex = current;
+      _controller.forward(from: 0);
     }
   }
 
@@ -143,62 +163,21 @@ class _BranchSliderState extends State<_BranchSlider> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: (details) => _onSwipe(details.primaryVelocity ?? 0),
-      child: _SlideDirection(
-        forward: _forward,
-        child: AnimatedSwitcher(
-          duration: AppMotion.long,
-          switchInCurve: AppMotion.easeOut,
-          switchOutCurve: AppMotion.easeIn,
-          // Stack keeps both the outgoing and incoming tab on screen so
-          // the outgoing can finish sliding out while the incoming slides
-          // in. Without this only one is visible and the transition reads
-          // as a hard cross.
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            alignment: Alignment.topLeft,
-            children: <Widget>[...previousChildren, ?currentChild],
-          ),
-          transitionBuilder: (child, animation) {
-            final bool forward = _SlideDirection.of(context);
-            final bool isExiting = animation.status == AnimationStatus.reverse;
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: isExiting
-                      ? Offset.zero
-                      : Offset(forward ? 0.3 : -0.3, 0),
-                  end: isExiting
-                      ? Offset(forward ? -0.3 : 0.3, 0)
-                      : Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: KeyedSubtree(
-            key: ValueKey(widget.shell.currentIndex),
-            child: widget.shell,
-          ),
-        ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        child: widget.shell,
+        builder: (context, child) {
+          final double t = _controller.value;
+          // t == 1 → no transform, no opacity wrapper, identity layout.
+          if (t == 1.0 || t == 0.0) return child!;
+          final double beginOffset = _forward ? 0.3 : -0.3;
+          final double currentOffset = beginOffset * (1 - t);
+          return Transform.translate(
+            offset: Offset(currentOffset, 0),
+            child: Opacity(opacity: t, child: child),
+          );
+        },
       ),
     );
   }
-}
-
-/// Provides the current slide direction to the [AnimatedSwitcher]'s
-/// transitionBuilder, which otherwise has no way to know whether the new
-/// tab came from the left or the right of the previous one.
-class _SlideDirection extends InheritedWidget {
-  const _SlideDirection({required this.forward, required super.child});
-
-  final bool forward;
-
-  static bool of(BuildContext context) {
-    final _SlideDirection? scope = context
-        .dependOnInheritedWidgetOfExactType<_SlideDirection>();
-    return scope?.forward ?? true;
-  }
-
-  @override
-  bool updateShouldNotify(_SlideDirection old) => old.forward != forward;
 }
