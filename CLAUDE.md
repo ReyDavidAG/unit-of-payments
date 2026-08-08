@@ -94,6 +94,15 @@ One public class per file. The file name matches the class name in `snake_case`.
 
 ## Language
 
+Two languages, and the split is strict.
+
+**Everything the user reads is in Spanish (es-MX, tuteo).** Labels, buttons, titles, hints,
+validation messages, error messages, snackbars, tooltips, empty states, notification text.
+No English leaks into the UI. Exceptions: the product name `Unit of Payments`, and developer
+errors that only ever reach a log or a debug console.
+
+**Everything a developer reads is in English.**
+
 - **All code in English**: class names, variables, methods, file names, folders.
 - **All comments in English.**
 - Comments must be **short — one line**. Explain *why*, never *what*. If the code needs a

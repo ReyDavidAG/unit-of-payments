@@ -214,9 +214,12 @@ Every interactive widget ships all its states: default, pressed, focused, disabl
 
 ### Copy
 
-Verbs, not nouns. *"Add subscription"*, not *"Subscription management"*. Amounts always carry their
-currency. Dates are relative when close (*"in 3 days"*) and absolute when not (*"12 Sep"*). No invented
-numbers anywhere — an empty dashboard shows an em dash and a label, never a fake total.
+**All user-facing text is Spanish (es-MX, tuteo).** The app locale is fixed to `es-MX` so Material's
+own strings follow. Code and comments stay English — see [CLAUDE.md](CLAUDE.md).
+
+Verbs, not nouns. *"Agregar suscripción"*, not *"Gestión de suscripciones"*. Amounts always carry
+their currency. Dates are relative when close (*"en 3 días"*) and absolute when not (*"12 sep"*). No
+invented numbers anywhere — an empty dashboard shows an em dash and a label, never a fake total.
 
 ---
 
