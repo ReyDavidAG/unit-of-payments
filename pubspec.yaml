@@ -51,6 +51,7 @@ flutter:
 
   assets:
     - lib/assets/cards/
+    - lib/assets/icon/splash.png
 
   # Bundled, not fetched: the app has to work offline. OFL, see fonts/OFL.txt.
   fonts:

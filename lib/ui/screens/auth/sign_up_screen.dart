@@ -59,7 +59,7 @@ class SignUpScreen extends StatelessWidget {
               AnimatedHero(
                 child: Center(
                   child: Image.asset(
-                    'lib/assets/icon/logo.svg',
+                    'lib/assets/icon/splash.png',
                     width: _logoWidth,
                     height: _logoHeight,
                     fit: BoxFit.contain,
