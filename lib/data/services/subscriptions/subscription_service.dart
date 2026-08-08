@@ -1,3 +1,4 @@
+import '../../models/subscriptions/debtor_model.dart';
 import '../../models/subscriptions/subscription_model.dart';
 import '../supabase/supabase_service.dart';
 
@@ -24,6 +25,15 @@ class SubscriptionService {
         .from(_upcomingView)
         .select();
     return rows.map(SubscriptionModel.fromJson).toList();
+  }
+
+  /// Who owes the user money, grouped and summed by Postgres.
+  static Future<List<DebtorModel>> fetchDebtors() async {
+    final List<Map<String, dynamic>> rows = await SupabaseService.client
+        .from('v_debtors')
+        .select()
+        .order('outstanding', ascending: false);
+    return rows.map(DebtorModel.fromJson).toList();
   }
 
   /// Inserts against the table, then reads the row back from the view so the
