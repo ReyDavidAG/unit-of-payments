@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/services/supabase/supabase_service.dart';
 import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
-import '../../ui/screens/home/home_screen.dart';
+import '../../ui/screens/cards/cards_screen.dart';
 
 /// Routes and the session guard. The redirect is the only place that decides
 /// whether a screen is reachable.
@@ -28,9 +28,9 @@ class AppRouter {
         builder: (context, state) => const SignUpScreen(),
       ),
       GoRoute(
-        path: HomeScreen.routePath,
-        name: HomeScreen.routeName,
-        builder: (context, state) => const HomeScreen(),
+        path: CardsScreen.routePath,
+        name: CardsScreen.routeName,
+        builder: (context, state) => const CardsScreen(),
       ),
     ],
     redirect: (context, state) {
@@ -43,7 +43,7 @@ class AppRouter {
         return SignInScreen.routePath;
       }
       if (signedIn && onAuthScreen) {
-        return HomeScreen.routePath;
+        return CardsScreen.routePath;
       }
       return null;
     },
