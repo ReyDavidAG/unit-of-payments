@@ -5,7 +5,7 @@
          scheduled notification is lost when the phone reboots. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="unit_of_payments"
+        android:label="Vence"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
