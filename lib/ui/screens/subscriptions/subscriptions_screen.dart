@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
@@ -9,6 +10,7 @@ import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/subscriptions/subscription_form_view.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
 import '../../widgets/common/theme_toggle_button.dart';
@@ -93,7 +95,12 @@ class SubscriptionsScreen extends ConsumerWidget {
               heroTag: null,
               onPressed: () => _create(context, ref),
               tooltip: 'Agregar suscripción',
-              child: const Icon(Icons.add),
+              // The FAB borrows the active tab's hue (success) so the action
+              // and the section read as one — the tab already trained the eye
+              // to expect that colour on this screen.
+              backgroundColor: Theme.of(context).success.withAlpha(200),
+              foregroundColor: AppColors.paper,
+              child: const Icon(Icons.note_add_outlined),
             ),
       body: subscriptions.when(
         loading: () => ListView.separated(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/cards/card_model.dart';
 import '../../../data/providers/cards/cards_provider.dart';
@@ -9,6 +10,7 @@ import '../../views/cards/card_form_view.dart';
 import '../../widgets/cards/card_tile_skeleton.dart';
 import '../../widgets/cards/card_tile_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
 import '../../widgets/common/theme_toggle_button.dart';
@@ -101,7 +103,13 @@ class CardsScreen extends ConsumerWidget {
               heroTag: null,
               onPressed: () => _create(context, ref),
               tooltip: 'Agregar tarjeta',
-              child: const Icon(Icons.add),
+              // Same trick as Suscripciones: lift the active tab's hue
+              // (tabPurple) so the action reads as belonging to this section.
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.tabPurpleDark
+                  : AppColors.tabPurple,
+              foregroundColor: AppColors.paper,
+              child: const Icon(Icons.add_card_outlined),
             ),
       body: cards.when(
         loading: () => ListView.separated(
