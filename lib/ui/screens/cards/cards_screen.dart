@@ -8,6 +8,7 @@ import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/cards/card_form_view.dart';
 import '../../widgets/cards/card_tile_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/motion/motion.dart';
 
 class CardsScreen extends ConsumerWidget {
   const CardsScreen({super.key});
@@ -116,10 +117,13 @@ class CardsScreen extends ConsumerWidget {
                 itemCount: items.length,
                 separatorBuilder: (_, _) =>
                     const SizedBox(height: AppSpacing.listGap),
-                itemBuilder: (_, index) => CardTileWidget(
-                  card: items[index],
-                  onTap: () => _edit(context, ref, items[index]),
-                  onArchive: () => _archive(context, ref, items[index]),
+                itemBuilder: (_, index) => AnimatedListItem(
+                  index: index,
+                  child: CardTileWidget(
+                    card: items[index],
+                    onTap: () => _edit(context, ref, items[index]),
+                    onArchive: () => _archive(context, ref, items[index]),
+                  ),
                 ),
               ),
       ),

@@ -5,6 +5,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/auth/password_reset_view.dart';
 import '../../widgets/auth/auth_form_widget.dart';
+import '../../widgets/common/motion/motion.dart';
 import 'sign_up_screen.dart';
 
 class SignInScreen extends StatelessWidget {
@@ -25,12 +26,24 @@ class SignInScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.xl2),
-              Text('Iniciar sesión', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Tus suscripciones te siguen en todos tus dispositivos.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              AnimatedHero(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Iniciar sesión',
+                      style: theme.textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Tus suscripciones te siguen en todos tus dispositivos.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),

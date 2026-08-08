@@ -5,6 +5,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/notifications/notification_log_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
+import '../../widgets/common/motion/motion.dart';
 import '../../widgets/notifications/notification_entry_widget.dart';
 
 class NotificationHistoryScreen extends ConsumerWidget {
@@ -50,7 +51,10 @@ class NotificationHistoryScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.screenPadding),
       itemCount: entries.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.listGap),
-      itemBuilder: (_, index) => NotificationEntryWidget(entry: entries[index]),
+      itemBuilder: (_, index) => AnimatedListItem(
+        index: index,
+        child: NotificationEntryWidget(entry: entries[index]),
+      ),
     );
   }
 }

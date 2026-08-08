@@ -9,6 +9,7 @@ import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/subscriptions/subscription_form_view.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/motion/motion.dart';
 import '../../widgets/subscriptions/subscription_tile_widget.dart';
 
 class SubscriptionsScreen extends ConsumerWidget {
@@ -108,10 +109,13 @@ class SubscriptionsScreen extends ConsumerWidget {
                 itemCount: items.length,
                 separatorBuilder: (_, _) =>
                     const SizedBox(height: AppSpacing.listGap),
-                itemBuilder: (_, index) => SubscriptionTileWidget(
-                  subscription: items[index],
-                  today: today,
-                  onTap: () => _edit(context, ref, items[index]),
+                itemBuilder: (_, index) => AnimatedListItem(
+                  index: index,
+                  child: SubscriptionTileWidget(
+                    subscription: items[index],
+                    today: today,
+                    onTap: () => _edit(context, ref, items[index]),
+                  ),
                 ),
               ),
       ),
