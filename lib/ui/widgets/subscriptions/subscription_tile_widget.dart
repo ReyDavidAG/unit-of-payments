@@ -70,9 +70,16 @@ class SubscriptionTileWidget extends StatelessWidget {
                                 // Semantic palette: critical when imminent,
                                 // warning when soon, success when there's
                                 // runway, default muted otherwise.
-                                color: _urgencyColor(days ?? 0, isDark),
+                                color: AppColors.urgency(
+                                  days ?? 0,
+                                  isDark: isDark,
+                                ),
                                 fontWeight:
-                                    _urgencyColor(days ?? 0, isDark) == null
+                                    AppColors.urgency(
+                                          days ?? 0,
+                                          isDark: isDark,
+                                        ) ==
+                                        null
                                     ? null
                                     : FontWeight.w500,
                               ),
@@ -89,16 +96,6 @@ class SubscriptionTileWidget extends StatelessWidget {
       ),
     );
   }
-
-  /// Map days-until-charge to a semantic colour. Null means "no tint"
-  /// — the default muted copy. Critical / warning / success escalate
-  /// with proximity.
-  static Color? _urgencyColor(int days, bool isDark) {
-    if (days <= 3) return isDark ? AppColors.criticalDark : AppColors.critical;
-    if (days <= 6) return isDark ? AppColors.warningDark : AppColors.warning;
-    if (days <= 13) return isDark ? AppColors.successDark : AppColors.success;
-    return null;
-  }
 }
 
 class _Details extends StatelessWidget {
@@ -109,9 +106,17 @@ class _Details extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    // An installment plan reports progress where an open-ended charge reports
+    // its cycle: "Mensual" is true of both and useful on neither.
     final String meta = [
-      subscription.cycle.label,
+      if (subscription.isInstallment && subscription.installmentsPaid != null)
+        '${subscription.kind.shortLabel} '
+            '${subscription.installmentsPaid} de '
+            '${subscription.installmentsTotal}'
+      else
+        subscription.cycle.label,
       if (subscription.cardAlias != null) subscription.cardAlias!,
+      if (subscription.owedBy != null) '${subscription.owedBy} te paga',
     ].join(' · ');
     // Meta line carries the brand tint at 80% opacity — a hint of the card's
     // colour without filling the row. Reads as muted when no card is set.

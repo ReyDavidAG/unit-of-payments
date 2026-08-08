@@ -33,6 +33,12 @@ class MoneyHelper {
 
   static String amount(double value) => _format.format(value);
 
+  /// The monthly charge a promotion resolves to. Rounded to cents because that
+  /// is what the card is actually billed; the payments can therefore sum to a
+  /// few cents under the price, which the form shows rather than hides.
+  static double installmentAmount(double total, int count) =>
+      double.parse((total / count).toStringAsFixed(2));
+
   static final DateFormat _shortDate = DateFormat('d MMM', 'es_MX');
   static final DateFormat _longDate = DateFormat('d MMMM y', 'es_MX');
 
@@ -42,6 +48,16 @@ class MoneyHelper {
 
   /// Relative when close, absolute when not — a date three months out reads
   /// worse as "en 94 días" than as "12 sep".
+  /// A payment deadline reads as a sentence, not as a bare date: the charge
+  /// label answers "when", this one answers "when must I act".
+  static String dueLabel(DateTime date, int daysUntil) => switch (daysUntil) {
+    < 0 => 'Venció el ${shortDate(date)}',
+    0 => 'Se paga hoy',
+    1 => 'Se paga mañana',
+    <= 14 => 'Se paga en $daysUntil días',
+    _ => 'Se paga el ${shortDate(date)}',
+  };
+
   static String chargeLabel(DateTime date, int daysUntil) =>
       switch (daysUntil) {
         < 0 => 'Venció el ${shortDate(date)}',
