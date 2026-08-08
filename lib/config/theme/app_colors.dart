@@ -5,23 +5,26 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
-  // Light
-  static const Color paper = Color(0xFFFAF3F1);
-  static const Color surface = Color(0xFFF3EBE8);
-  static const Color surface2 = Color(0xFFE9DFDB);
-  static const Color rule = Color(0xFFDBD2CF);
-  static const Color neutral = Color(0xFF817875);
-  static const Color muted = Color(0xFF59504D);
-  static const Color ink = Color(0xFF1C1411);
-  static const Color accent = Color(0xFFD9553F);
-  static const Color accentInk = Color(0xFF721E10);
-  static const Color focus = Color(0xFFC8331A);
+  // Light — Hum palette: warm cream paper, deep warm-black ink, single
+  // terracotta accent that carries buttons, focus rings and tab indicators
+  // in one chromatic identity. Hex values chosen to match the warm, baked
+  // bread-crust tone of the Hallmark Hum example.
+  static const Color paper = Color(0xFFF8F4ED);
+  static const Color surface = Color(0xFFF1EBE2);
+  static const Color surface2 = Color(0xFFE9DDCF);
+  static const Color rule = Color(0xFFDDD2C2);
+  static const Color neutral = Color(0xFF8A7E72);
+  static const Color muted = Color(0xFF6B6157);
+  static const Color ink = Color(0xFF1A1A1A);
+  static const Color accent = Color(0xFFB8763B);
+  static const Color accentInk = Color(0xFF6B3818);
+  static const Color focus = Color(0xFFB8763B);
   static const Color danger = Color(0xFFBD1F3D);
 
-  // Primary button fill — deep teal borrowed from the cascade logo's middle
-  // card. Sits between ink and coral so FilledButtons and OutlinedButtons
-  // read as chromatic and decided, not as a black-and-white ink fill.
-  static const Color primary = Color(0xFF1E4D6B);
+  // Primary button fill — same terracotta as the accent. One identity,
+  // not a separate "primary" colour that competes with it. Reads as
+  // decided and chromatic on the warm cream paper.
+  static const Color primary = Color(0xFFB8763B);
   static const Color onPrimary = paper;
 
   // Dark. Wayfare's Manifesto-dark palette: warm anchor at hue 60, bleed-red
