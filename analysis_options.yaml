@@ -1,1 +1,15 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Trailing commas make `dart format` split widget trees one arg per line.
+    - require_trailing_commas
+    - prefer_single_quotes
+    - always_declare_return_types
+    - avoid_print
+    - sort_child_properties_last
+    - unnecessary_parenthesis
+
+analyzer:
+  exclude:
+    - flutter_project_example/**

@@ -57,3 +57,6 @@ android/key.properties
 
 # Local tooling
 .claude/settings.local.json
+
+# Reference project, not part of this app
+flutter_project_example/
