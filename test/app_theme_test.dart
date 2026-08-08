@@ -30,10 +30,11 @@ void main() {
   });
 
   test('card swatches fall back instead of throwing', () {
-    expect(AppColors.swatchFromHex('#4B84E2'), AppColors.defaultSwatch);
-    expect(AppColors.swatchFromHex('#C46D01'), AppColors.cardSwatches['amber']);
+    expect(AppColors.swatchFromHex('#494ECF'), AppColors.defaultSwatch);
+    expect(AppColors.swatchFromHex('#D57700'), AppColors.cardSwatches['amber']);
     // An off-palette or malformed value must not crash a list.
-    expect(AppColors.swatchFromHex('#4A5568'), AppColors.defaultSwatch);
+    // A colour from the retired eight-swatch set must not render as itself.
+    expect(AppColors.swatchFromHex('#C46D01'), AppColors.defaultSwatch);
     expect(AppColors.swatchFromHex('nope'), AppColors.defaultSwatch);
     expect(AppColors.swatchFromHex(null), AppColors.defaultSwatch);
   });

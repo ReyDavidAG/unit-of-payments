@@ -6,7 +6,7 @@ void main() {
     final CardTotalModel total = CardTotalModel.fromJson({
       'card_id': 'uuid',
       'alias': 'BBVA Oro',
-      'color': '#4B84E2',
+      'color': '#494ECF',
       'subscription_count': 3,
       'monthly_total': '648.75',
       'next_charge_date': '2026-08-15',
@@ -22,7 +22,7 @@ void main() {
     final CardTotalModel total = CardTotalModel.fromJson({
       'card_id': 'uuid',
       'alias': 'Nómina',
-      'color': '#0F9B89',
+      'color': '#0CA3BE',
       'subscription_count': 0,
       'monthly_total': 0,
       'next_charge_date': null,
