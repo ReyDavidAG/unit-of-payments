@@ -398,8 +398,8 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 | 4 | `feature/cards` | CRUD de alias de tarjeta ✅ |
 | 5 | `feature/subscriptions` | CRUD de suscripciones ligadas a tarjeta ✅ |
 | 6 | `feature/dashboard` | Totales por tarjeta y próximos cobros, desde las vistas ✅ |
-| 7 | `feature/notifications` | Programación local + `notification_log` |
-| 8 | `feature/notification-history` | Pantalla de historial |
+| 7 | `feature/notifications` | Programación local + `notification_log` ✅ |
+| 8 | `feature/notification-history` | Pantalla de historial ✅ |
 
 Las fases 1 y 2 no tocan Dart. La 3 no se empieza hasta que la 1 esté probada: si el esquema cambia
 después, se rehace el cliente.
