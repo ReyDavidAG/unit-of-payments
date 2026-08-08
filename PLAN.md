@@ -390,6 +390,7 @@ Una rama por fase. Cada una termina con `./scripts/format.sh` limpio.
 |---|---|---|
 | 1 | `feature/supabase-schema` | Migraciones SQL: tipos, tablas, constraints, funciones, vistas, RLS, índices. Verificado con dos usuarios de prueba: A no ve nada de B |
 | 2 | `feature/keepalive-workflow` | Tabla `keepalive` + workflow + secrets |
+| 2.5 | `feature/design-system` | [DESIGN.md](DESIGN.md) + tokens en `config/theme/` + fuentes Geist |
 | 3 | `feature/supabase-auth` | `supabase_flutter`, `.env`, login/registro, sesión persistida, guard en el router |
 | 4 | `feature/cards` | CRUD de alias de tarjeta |
 | 5 | `feature/subscriptions` | CRUD de suscripciones ligadas a tarjeta |
