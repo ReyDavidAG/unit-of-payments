@@ -51,10 +51,10 @@ class _BrandTile extends StatelessWidget {
   final VoidCallback onTap;
 
   // Width and height match the bundled WebP exactly (640×400 source =
-  // 1.6:1). Earlier this was 96×60 with an extra inset, which cropped the
-  // WebP and left only the middle band visible.
-  static const double _width = 120;
-  static const double _height = 75;
+  // 1.6:1). Sized down to ~50% so four tiles fit comfortably in a row on
+  // phone-width sheets without wrapping.
+  static const double _width = 60;
+  static const double _height = 38;
 
   @override
   Widget build(BuildContext context) {
