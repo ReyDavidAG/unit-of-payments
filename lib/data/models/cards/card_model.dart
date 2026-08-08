@@ -8,6 +8,7 @@ class CardModel {
     required this.color,
     this.last4,
     this.cutoffDay,
+    this.paymentDueDay,
     this.archived = false,
   });
 
@@ -18,6 +19,7 @@ class CardModel {
     color: json['color'] as String,
     last4: json['last4'] as String?,
     cutoffDay: json['cutoff_day'] as int?,
+    paymentDueDay: json['payment_due_day'] as int?,
     archived: json['archived'] as bool? ?? false,
   );
 
@@ -27,6 +29,11 @@ class CardModel {
   final String color;
   final String? last4;
   final int? cutoffDay;
+
+  /// The deadline, not the cutoff. Missing it costs interest and the
+  /// interest-free months; the cutoff only decides which statement a charge
+  /// lands on.
+  final int? paymentDueDay;
   final bool archived;
 
   /// Omits id and user_id: the database fills both, and a client-supplied
@@ -37,6 +44,7 @@ class CardModel {
     'color': color,
     'last4': last4,
     'cutoff_day': cutoffDay,
+    'payment_due_day': paymentDueDay,
   };
 
   CardModel copyWith({
@@ -45,6 +53,7 @@ class CardModel {
     String? color,
     String? last4,
     int? cutoffDay,
+    int? paymentDueDay,
     bool? archived,
     bool clearLast4 = false,
     bool clearCutoffDay = false,
@@ -55,6 +64,7 @@ class CardModel {
     color: color ?? this.color,
     last4: clearLast4 ? null : (last4 ?? this.last4),
     cutoffDay: clearCutoffDay ? null : (cutoffDay ?? this.cutoffDay),
+    paymentDueDay: paymentDueDay ?? this.paymentDueDay,
     archived: archived ?? this.archived,
   );
 }
