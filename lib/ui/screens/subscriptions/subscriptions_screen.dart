@@ -81,6 +81,9 @@ class SubscriptionsScreen extends ConsumerWidget {
       floatingActionButton: subscriptions.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(
+              // See CardsScreen: every tab stays mounted, so the default
+              // shared hero tag collides.
+              heroTag: null,
               onPressed: () => _create(context, ref),
               tooltip: 'Agregar suscripción',
               child: const Icon(Icons.add),

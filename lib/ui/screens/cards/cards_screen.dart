@@ -87,6 +87,11 @@ class CardsScreen extends ConsumerWidget {
       floatingActionButton: cards.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(
+              // The shell keeps every tab mounted, so two FABs share the tree.
+              // A null tag opts out of the hero entirely: they never fly
+              // between routes, and a shared default tag crashes the
+              // transition.
+              heroTag: null,
               onPressed: () => _create(context, ref),
               tooltip: 'Agregar tarjeta',
               child: const Icon(Icons.add),
