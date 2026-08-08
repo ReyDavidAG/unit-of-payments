@@ -18,6 +18,12 @@ class AppColors {
   static const Color focus = Color(0xFFC8331A);
   static const Color danger = Color(0xFFBD1F3D);
 
+  // Primary button fill — deep teal borrowed from the cascade logo's middle
+  // card. Sits between ink and coral so FilledButtons and OutlinedButtons
+  // read as chromatic and decided, not as a black-and-white ink fill.
+  static const Color primary = Color(0xFF1E4D6B);
+  static const Color onPrimary = paper;
+
   // Dark. Wayfare's Manifesto-dark palette: warm anchor at hue 60, bleed-red
   // accent at 25. Chroma is clamped to what sRGB can hold — the source is CSS
   // oklch, which the browser gamut-maps and Flutter cannot.
@@ -34,6 +40,12 @@ class AppColors {
   // Magenta, not red: the accent is now red, and a destructive action in a
   // second red is a destructive action nobody can tell apart from a marker.
   static const Color dangerDark = Color(0xFFEA0C9B);
+
+  // Primary button fill in dark mode: same hue as light, lifted enough
+  // lightness to clear 4.5:1 against paperDark. A single chromatic
+  // identity across modes, not a black/white flip.
+  static const Color primaryDark = Color(0xFF4A8AAC);
+  static const Color onPrimaryDark = paperDark;
 
   /// The only colours a card alias may take. Six base swatches, plus two
   /// added per request: morado (Nu) and amarillo (Mercado Pago). The base
