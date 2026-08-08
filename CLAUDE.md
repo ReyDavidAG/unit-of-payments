@@ -17,10 +17,14 @@ Work is done **feature by feature**, one branch per feature (`feature/<name>`).
 ## Commands
 
 ```bash
-flutter pub get       # install dependencies
-flutter run           # run on a device/emulator
-./scripts/format.sh   # dart format + flutter analyze  <-- run at the end of EVERY change
+flutter pub get                              # install dependencies
+flutter run --dart-define-from-file=.env     # run on a device/emulator
+./scripts/format.sh                          # dart format + flutter analyze  <-- run at the end of EVERY change
 ```
+
+Secrets are compile-time, never a bundled asset: copy `.env.example` to `.env` and pass
+`--dart-define-from-file=.env` on every `run` and `build`. Read them only through
+[Environment](lib/core/constants/environment.dart), never `String.fromEnvironment` directly.
 
 `./scripts/format.sh` is the equivalent of Prettier here. It must exit clean (0 issues)
 before any work is reported as done. No exceptions.
@@ -89,6 +93,15 @@ One public class per file. The file name matches the class name in `snake_case`.
 - Long files are the failure mode this project exists to avoid. Splitting is never optional.
 
 ## Language
+
+Two languages, and the split is strict.
+
+**Everything the user reads is in Spanish (es-MX, tuteo).** Labels, buttons, titles, hints,
+validation messages, error messages, snackbars, tooltips, empty states, notification text.
+No English leaks into the UI. Exceptions: the product name `Unit of Payments`, and developer
+errors that only ever reach a log or a debug console.
+
+**Everything a developer reads is in English.**
 
 - **All code in English**: class names, variables, methods, file names, folders.
 - **All comments in English.**
