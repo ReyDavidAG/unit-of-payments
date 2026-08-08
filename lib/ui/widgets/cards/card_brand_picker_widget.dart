@@ -6,8 +6,8 @@ import '../../../data/models/cards/card_model.dart';
 
 /// Brand picker for the card form. Each option shows the brand's bundled
 /// WebP as a small card thumbnail, the brand label below, and a selection
-/// ring. Replaces the old six-swatch colour picker — the brand is the
-/// identity now, not a user-picked colour.
+/// ring. The thumbnail is exactly 1.6:1 to match the WebP source — any
+/// mismatch crops the card and hides the chip or wordmark.
 class CardBrandPickerWidget extends StatelessWidget {
   const CardBrandPickerWidget({
     required this.selected,
@@ -50,8 +50,11 @@ class _BrandTile extends StatelessWidget {
   final Color outline;
   final VoidCallback onTap;
 
-  static const double _width = 96;
-  static const double _height = 60;
+  // Width and height match the bundled WebP exactly (640×400 source =
+  // 1.6:1). Earlier this was 96×60 with an extra inset, which cropped the
+  // WebP and left only the middle band visible.
+  static const double _width = 120;
+  static const double _height = 75;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +81,7 @@ class _BrandTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSpacing.xs2),
                 child: Image.asset(
                   CardAssets.webp(brand),
-                  width: _width - AppSpacing.md,
+                  width: _width,
                   height: _height,
                   fit: BoxFit.cover,
                 ),
