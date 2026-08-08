@@ -369,16 +369,19 @@ lib/
 Sin capa de repositorio sobre el cliente de Supabase: ya es el cliente de datos. Una interfaz con
 una sola implementación es la abstracción que CLAUDE.md prohíbe.
 
-**Dependencias a agregar** (requieren tu OK, según CLAUDE.md):
+**Dependencias** (agregar una nueva requiere tu OK, según CLAUDE.md):
 
-| Paquete | Para qué |
-|---|---|
-| `supabase_flutter` | cliente + auth + sesión persistida |
-| `flutter_riverpod` | estado |
-| `go_router` | rutas |
-| `flutter_local_notifications` + `timezone` | recordatorios |
-| `intl` | formato de moneda y fechas |
-| `flutter_dotenv` | leer `.env` (ya está en `.gitignore`) |
+| Paquete | Para qué | Estado |
+|---|---|---|
+| `supabase_flutter` | cliente + auth + sesión persistida | ✅ instalado |
+| `go_router` | rutas + guard de sesión | ✅ instalado |
+| `flutter_riverpod` | estado compartido | ✅ instalado |
+| `flutter_local_notifications` + `timezone` | recordatorios | pendiente, fase 7 |
+| `intl` | formato de moneda y fechas | pendiente, fase 6 |
+
+Sin `flutter_dotenv`: `--dart-define-from-file` es nativo del SDK y acepta formato `.env`. El
+paquete además empaquetaría el archivo como asset legible dentro del APK; `String.fromEnvironment`
+lo compila dentro del binario.
 
 ---
 
