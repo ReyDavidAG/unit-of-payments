@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
+import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/cards/card_total_model.dart';
 
 /// One card alias and what it costs per month. The swatch is a small square
@@ -24,16 +24,13 @@ class CardTotalWidget extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Row(
           children: [
-            Container(
-              width: AppSpacing.md,
-              height: AppSpacing.md,
-              decoration: BoxDecoration(
-                // An empty colour is the uncarded bucket, which has no swatch
-                // to show because there is no card behind it.
-                color: total.color.isEmpty
-                    ? theme.dividerColor
-                    : AppColors.swatchFromHex(total.color),
-                borderRadius: BorderRadius.circular(AppSpacing.xs2),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSpacing.xs2),
+              child: Image.asset(
+                CardAssets.webp(total.brand),
+                width: AppSpacing.xl2,
+                height: AppSpacing.xl,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),

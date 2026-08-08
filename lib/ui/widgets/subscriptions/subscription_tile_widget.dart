@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
+import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// Name on the left, amount right-aligned in mono so decimals line up down the
@@ -36,9 +36,11 @@ class SubscriptionTileWidget extends StatelessWidget {
             children: [
               Container(
                 width: AppSpacing.swatchBar,
-                color: subscription.cardId == null
+                color:
+                    subscription.cardId == null ||
+                        subscription.cardBrand == null
                     ? theme.dividerColor
-                    : AppColors.swatchFromHex(subscription.cardColor),
+                    : CardAssets.accent(subscription.cardBrand!),
               ),
               Expanded(
                 child: Padding(

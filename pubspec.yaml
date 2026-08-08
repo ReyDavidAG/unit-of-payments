@@ -49,6 +49,9 @@ flutter_native_splash:
 flutter:
   uses-material-design: true
 
+  assets:
+    - lib/assets/cards/
+
   # Bundled, not fetched: the app has to work offline. OFL, see fonts/OFL.txt.
   fonts:
     - family: Geist
