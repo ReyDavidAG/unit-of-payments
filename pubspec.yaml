@@ -17,3 +17,20 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Bundled, not fetched: the app has to work offline. OFL, see fonts/OFL.txt.
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: lib/assets/fonts/Geist-Regular.ttf
+          weight: 400
+        - asset: lib/assets/fonts/Geist-Medium.ttf
+          weight: 500
+        - asset: lib/assets/fonts/Geist-Bold.ttf
+          weight: 700
+    - family: GeistMono
+      fonts:
+        - asset: lib/assets/fonts/GeistMono-Regular.ttf
+          weight: 400
+        - asset: lib/assets/fonts/GeistMono-Medium.ttf
+          weight: 500

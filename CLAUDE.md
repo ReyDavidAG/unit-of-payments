@@ -3,6 +3,9 @@
 Rules for working in this repository. **Follow them strictly.** If a rule blocks the task,
 say so and stop — do not improvise around it.
 
+Two companion documents, equally binding: [DESIGN.md](DESIGN.md) for how it looks and
+[PLAN.md](PLAN.md) for what gets built and in what order.
+
 ## Project
 
 `unit_of_payments` — Flutter app that notifies you of upcoming payments and shows all your
@@ -118,8 +121,9 @@ few lines of code are not enough.
 
 ## Theming
 
-All colors, text styles and spacing come from `config/theme/`. Never hardcode a color or a
-font size in a widget. Branch on `Theme.of(context).brightness`, not on a boolean flag.
+All colors, text styles, spacing, radii and motion come from `config/theme/`, and every token
+there is specified in [DESIGN.md](DESIGN.md). **A widget that hardcodes a color, a size, a
+radius or a duration is a bug.** Branch on `Theme.of(context).brightness`, not on a boolean flag.
 
 ## Definition of done
 
