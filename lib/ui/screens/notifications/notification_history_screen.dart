@@ -6,6 +6,7 @@ import '../../../data/models/notifications/notification_log_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
 import '../../../data/services/supabase/supabase_service.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/notifications/notification_entry_skeleton.dart';
 import '../../widgets/notifications/notification_entry_widget.dart';
 
 class NotificationHistoryScreen extends ConsumerWidget {
@@ -29,7 +30,13 @@ class NotificationHistoryScreen extends ConsumerWidget {
           await ref.read(notificationLogProvider.future);
         },
         child: switch (log) {
-          AsyncLoading() => const Center(child: CircularProgressIndicator()),
+          AsyncLoading() => ListView.separated(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            itemCount: 6,
+            separatorBuilder: (_, _) =>
+                const SizedBox(height: AppSpacing.listGap),
+            itemBuilder: (_, _) => const NotificationEntrySkeleton(),
+          ),
           AsyncError(:final error) => _Centered(
             SupabaseService.describeError(error),
             theme,

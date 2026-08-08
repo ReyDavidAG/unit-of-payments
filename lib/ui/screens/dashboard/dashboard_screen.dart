@@ -13,6 +13,7 @@ import '../../../data/services/supabase/supabase_service.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/dashboard/card_total_widget.dart';
+import '../../widgets/dashboard/dashboard_skeleton.dart';
 import '../../widgets/dashboard/spend_split_widget.dart';
 import '../../widgets/dashboard/upcoming_charge_widget.dart';
 
@@ -45,29 +46,37 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref
-            ..invalidate(subscriptionsProvider)
-            ..invalidate(cardTotalsProvider)
-            ..invalidate(upcomingProvider);
-          await ref.read(cardTotalsProvider.future);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          children: [
-            const AnimatedHero(child: _MonthlyTotal()),
-            ...switch (totals) {
-              AsyncError(:final error) => [
-                _Message(SupabaseService.describeError(error)),
-              ],
-              AsyncLoading() => const [
-                Center(child: CircularProgressIndicator()),
-              ],
-              _ => _breakdown(totals.value ?? const [], uncarded, today),
-            },
-            ..._upcoming(upcoming.value ?? const [], today),
-          ],
+      body: totals.when(
+        loading: () => const DashboardSkeleton(),
+        error: (error, _) => RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(subscriptionsProvider)
+              ..invalidate(cardTotalsProvider)
+              ..invalidate(upcomingProvider);
+            await ref.read(cardTotalsProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            children: [_Message(SupabaseService.describeError(error))],
+          ),
+        ),
+        data: (_) => RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(subscriptionsProvider)
+              ..invalidate(cardTotalsProvider)
+              ..invalidate(upcomingProvider);
+            await ref.read(cardTotalsProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            children: [
+              const AnimatedHero(child: _MonthlyTotal()),
+              ..._breakdown(totals.value ?? const [], uncarded, today),
+              ..._upcoming(upcoming.value ?? const [], today),
+            ],
+          ),
         ),
       ),
     );
