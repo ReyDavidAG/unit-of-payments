@@ -159,8 +159,8 @@ class ProfileScreen extends ConsumerWidget {
     DropdownButtonFormField<String>(
       initialValue:
           supportedTimezones.any((zone) => zone.id == profile.timezone)
-              ? profile.timezone
-              : ProfileModel.defaultTimezone,
+          ? profile.timezone
+          : ProfileModel.defaultTimezone,
       decoration: const InputDecoration(
         labelText: 'Zona horaria',
         helperText: 'Decide a qué hora suenan los avisos',
@@ -198,7 +198,9 @@ class _IdentityHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Color avatarBg = isDark ? AppColors.primaryDark : AppColors.primary;
-    final Color avatarFg = isDark ? AppColors.onPrimaryDark : AppColors.onPrimary;
+    final Color avatarFg = isDark
+        ? AppColors.onPrimaryDark
+        : AppColors.onPrimary;
 
     return Column(
       children: [
@@ -206,10 +208,7 @@ class _IdentityHeader extends StatelessWidget {
           width: ProfileScreen._avatarSize,
           height: ProfileScreen._avatarSize,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: avatarBg,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: avatarBg, shape: BoxShape.circle),
           child: Text(
             avatarLetter,
             style: theme.textTheme.displayLarge?.copyWith(
@@ -297,7 +296,9 @@ class _ThemeSelector extends ConsumerWidget {
           label: Text('Oscuro'),
         ),
       ],
-      selected: {current == AppThemeMode.dark ? AppThemeMode.dark : AppThemeMode.light},
+      selected: {
+        current == AppThemeMode.dark ? AppThemeMode.dark : AppThemeMode.light,
+      },
       onSelectionChanged: (selection) =>
           ref.read(themeProvider.notifier).set(selection.first),
     );
@@ -321,8 +322,7 @@ class _AccountActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color warning = isDark ? AppColors.warningDark : AppColors.warning;
-    final Color critical =
-        isDark ? AppColors.criticalDark : AppColors.critical;
+    final Color critical = isDark ? AppColors.criticalDark : AppColors.critical;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -16,10 +16,12 @@ class ThemeToggleButton extends ConsumerWidget {
     final AppThemeMode current =
         ref.watch(themeProvider).value ?? AppThemeMode.light;
     final bool isDark = current == AppThemeMode.dark;
-    final IconData icon =
-        isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined;
-    final String label =
-        isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+    final IconData icon = isDark
+        ? Icons.light_mode_outlined
+        : Icons.dark_mode_outlined;
+    final String label = isDark
+        ? 'Cambiar a modo claro'
+        : 'Cambiar a modo oscuro';
 
     return IconButton(
       icon: Icon(icon),

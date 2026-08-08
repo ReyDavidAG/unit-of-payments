@@ -51,10 +51,7 @@ class SignUpScreen extends StatelessWidget {
         child: Column(
           children: [
             // Theme toggle pinned to the top-right.
-            Align(
-              alignment: Alignment.topRight,
-              child: ThemeToggleButton(),
-            ),
+            Align(alignment: Alignment.topRight, child: ThemeToggleButton()),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
