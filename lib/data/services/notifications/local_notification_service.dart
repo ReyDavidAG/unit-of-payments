@@ -129,23 +129,90 @@ class LocalNotificationService {
     title: title,
     body: body,
     scheduledDate: tz.TZDateTime.from(when, tz.local),
-    notificationDetails: const NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        'Cobros próximos',
-        channelDescription: 'Aviso antes de cada cobro de suscripción',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      ),
-      iOS: DarwinNotificationDetails(),
-    ),
+    notificationDetails: _details,
     // Inexact on purpose: an exact alarm needs a separate permission on
     // Android 14+, and a payment reminder does not need to the second.
     androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
   );
 
+  static const NotificationDetails _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _channelId,
+      'Cobros próximos',
+      channelDescription: 'Aviso antes de cada cobro de suscripción',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
   static Future<void> cancelAll() =>
       _guard('cancelAll', () async => _plugin.cancelAll().then((_) => true));
+
+  /// Whether the user has notifications switched on for the app, without
+  /// prompting. Null when the platform cannot answer.
+  static Future<bool?> isEnabled() async {
+    if (!await initialize()) {
+      return false;
+    }
+    final AndroidFlutterLocalNotificationsPlugin? android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
+      return android.areNotificationsEnabled();
+    }
+    final NotificationAppLaunchDetails? launch = await _plugin
+        .getNotificationAppLaunchDetails();
+    // iOS has no "are they on" query here; reaching the plugin at all is the
+    // only thing this can honestly report.
+    return launch == null ? null : true;
+  }
+
+  /// What the OS is actually holding. The count the scheduler *planned* and the
+  /// count the system *kept* are different numbers, and only this one matters.
+  static Future<int> pendingCount() async {
+    if (!await initialize()) {
+      return 0;
+    }
+    final List<PendingNotificationRequest> pending = await _plugin
+        .pendingNotificationRequests();
+    return pending.length;
+  }
+
+  /// Two notifications that answer two different questions, because a single
+  /// one cannot tell them apart:
+  ///
+  /// - one **now**, straight to the notification manager: does this app have
+  ///   permission and a working channel at all?
+  /// - one **scheduled**, down the exact path a real reminder takes: does the
+  ///   alarm come back and get drawn?
+  ///
+  /// The first arriving without the second is the signature of a broken alarm
+  /// path — a missing receiver, or the system holding the alarm back.
+  ///
+  /// Scheduling is inexact by design, so the second one is not punctual. Debug
+  /// only — see the caller.
+  static Future<void> probe(Duration delay) => _guard('probe', () async {
+    await _plugin.show(
+      id: _probeNowId,
+      title: 'Prueba 1 de 2 · inmediata',
+      body: 'El permiso y el canal funcionan.',
+      notificationDetails: _details,
+    );
+    await _scheduleOne(
+      id: _probeLaterId,
+      title: 'Prueba 2 de 2 · programada',
+      body: 'La alarma también. Los avisos funcionan en este teléfono.',
+      when: DateTime.now().add(delay),
+    );
+    return true;
+  });
+
+  /// Fixed and far from the hashed schedule ids, so a probe replaces the
+  /// previous probe and never a real reminder.
+  static const int _probeNowId = 2147483646;
+  static const int _probeLaterId = 2147483645;
 
   /// One place where an unavailable platform channel stops being an exception
   /// and becomes a logged false. Without it a missing plugin takes down the

@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/notifications/notification_log_model.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
+import '../../views/notifications/notification_debug_view.dart';
 import '../../widgets/common/error_retry_widget.dart';
 import '../../widgets/common/motion/motion.dart';
 import '../../widgets/common/profile_action_button.dart';
@@ -26,7 +28,17 @@ class NotificationHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Avisos'),
+        // Long-press opens the reminder diagnostic. Hidden in release: it is a
+        // developer's answer to "did the OS keep them", not a user feature.
+        title: GestureDetector(
+          onLongPress: kDebugMode
+              ? () => NotificationDebugView.show(
+                  context,
+                  log: log.value ?? const [],
+                )
+              : null,
+          child: const Text('Avisos'),
+        ),
         actions: const [ThemeToggleButton(), ProfileActionButton()],
       ),
       body: RefreshIndicator(
