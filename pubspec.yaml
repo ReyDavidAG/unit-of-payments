@@ -23,12 +23,35 @@ dependencies:
   timezone: ^0.11.1
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
+  flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.6
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/assets/icon/app_icon.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#FAF3F1"
+  color_dark: "#0A0704"
+  image: "lib/assets/icon/splash.png"
+  android_12:
+    color: "#FAF3F1"
+    color_dark: "#0A0704"
+    image: "lib/assets/icon/splash_android12.png"
+  ios: true
+  android: true
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - lib/assets/cards/
+    - lib/assets/icon/splash.png
 
   # Bundled, not fetched: the app has to work offline. OFL, see fonts/OFL.txt.
   fonts:

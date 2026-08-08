@@ -1,9 +1,12 @@
+import 'card_model.dart';
+
 /// A row of `v_card_totals`: what one card alias costs per month. Every field
 /// is computed by Postgres, so nothing here is writable.
 class CardTotalModel {
   const CardTotalModel({
     required this.alias,
     required this.color,
+    required this.brand,
     required this.subscriptionCount,
     required this.monthlyTotal,
     this.cardId,
@@ -14,6 +17,7 @@ class CardTotalModel {
     cardId: json['card_id'] as String?,
     alias: json['alias'] as String,
     color: json['color'] as String? ?? '',
+    brand: CardBrand.fromValue(json['brand'] as String?),
     subscriptionCount: json['subscription_count'] as int? ?? 0,
     monthlyTotal: _toDouble(json['monthly_total']),
     nextChargeDate: json['next_charge_date'] == null
@@ -24,6 +28,7 @@ class CardTotalModel {
   final String? cardId;
   final String alias;
   final String color;
+  final CardBrand brand;
   final int subscriptionCount;
   final double monthlyTotal;
   final DateTime? nextChargeDate;

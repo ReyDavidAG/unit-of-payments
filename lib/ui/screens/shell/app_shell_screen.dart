@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/app_motion.dart';
 import '../../../data/providers/notifications/notifications_provider.dart';
+import '../../../data/providers/shell_index_provider.dart';
 import '../../../data/services/notifications/local_notification_service.dart';
+import '../../widgets/common/colored_nav_bar.dart';
+import '../cards/cards_screen.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../notifications/notification_history_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
 
-/// Holds the bottom navigation. go_router keeps one navigator per branch, so
-/// each tab remembers its own scroll position and open sheets.
+/// Authenticated home: the bottom navigation lives here and the body is a
+/// PageView that holds the four tab screens. Drag follows the finger (the
+/// PageView default), velocity flicks snap, and the bottom indicator
+/// animates to the next icon automatically when the PageView settles.
+///
+/// The selected tab is owned by [shellIndexProvider]; the PageController
+/// stays in sync by listening to it on build and animating when external
+/// updates arrive (e.g., from the bottom nav).
 class AppShellScreen extends ConsumerStatefulWidget {
-  const AppShellScreen({required this.navigationShell, super.key});
-
-  final StatefulNavigationShell navigationShell;
+  const AppShellScreen({super.key});
 
   @override
   ConsumerState<AppShellScreen> createState() => _AppShellScreenState();
@@ -18,13 +29,13 @@ class AppShellScreen extends ConsumerStatefulWidget {
 
 class _AppShellScreenState extends ConsumerState<AppShellScreen>
     with WidgetsBindingObserver {
+  late final PageController _pageController;
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: ref.read(shellIndexProvider));
     WidgetsBinding.instance.addObserver(this);
-    // Asked after sign-in rather than on first launch: a permission prompt
-    // before the user has seen anything is a permission prompt that gets
-    // denied.
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => LocalNotificationService.requestPermission(),
     );
@@ -33,11 +44,10 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pageController.dispose();
     super.dispose();
   }
 
-  /// Rebuilt on resume too: a phone can sit closed for weeks, and the 30-day
-  /// window it was last scheduled with will have moved past.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -45,44 +55,109 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
     }
   }
 
+  void _onTabTapped(int index) {
+    if (index == ref.read(shellIndexProvider)) {
+      return;
+    }
+    ref.read(shellIndexProvider.notifier).state = index;
+    _pageController.animateToPage(
+      index,
+      duration: AppMotion.long,
+      curve: AppMotion.easeOut,
+    );
+  }
+
+  void _onPageChanged(int index) {
+    if (index == ref.read(shellIndexProvider)) {
+      return;
+    }
+    ref.read(shellIndexProvider.notifier).state = index;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Watched here, where the shell is always mounted, so scheduling never
-    // depends on the user opening the Avisos tab.
     ref.watch(notificationSyncProvider);
+    final int currentIndex = ref.watch(shellIndexProvider);
 
-    return Scaffold(
-      body: widget.navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: widget.navigationShell.currentIndex,
-        // initialLocation returns to a tab's root when it is already selected.
-        onDestinationSelected: (index) => widget.navigationShell.goBranch(
-          index,
-          initialLocation: index == widget.navigationShell.currentIndex,
+    // PopScope on the shell: pressing the system back while inside the
+    // authenticated shell asks before quitting the app. The dialog is
+    // shown via the shell's own context so it lives above any open
+    // sheet on a tab.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmExit(context);
+      },
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          physics: const ClampingScrollPhysics(),
+          children: const [
+            DashboardScreen(),
+            SubscriptionsScreen(),
+            CardsScreen(),
+            NotificationHistoryScreen(),
+          ],
         ),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.pie_chart_outline),
-            selectedIcon: Icon(Icons.pie_chart),
-            label: 'Resumen',
+        bottomNavigationBar: ColoredNavBar(
+          currentIndex: currentIndex,
+          onTap: _onTabTapped,
+          items: const [
+            NavBarItem(
+              icon: Icons.pie_chart_outline,
+              selectedIcon: Icons.pie_chart,
+              label: 'Resumen',
+            ),
+            NavBarItem(
+              icon: Icons.receipt_long_outlined,
+              selectedIcon: Icons.receipt_long,
+              label: 'Suscripciones',
+            ),
+            NavBarItem(
+              icon: Icons.credit_card_outlined,
+              selectedIcon: Icons.credit_card,
+              label: 'Tarjetas',
+            ),
+            NavBarItem(
+              icon: Icons.notifications_none,
+              selectedIcon: Icons.notifications,
+              label: 'Avisos',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Confirms the user wants to quit before letting the system pop the
+  /// shell route and exit the app. /shell is at the top of the stack,
+  /// so the only way out is [SystemNavigator.pop].
+  Future<void> _confirmExit(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Salir de Vence?'),
+        content: const Text(
+          'Estás a punto de cerrar la app. Tus datos quedan guardados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Suscripciones',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.credit_card_outlined),
-            selectedIcon: Icon(Icons.credit_card),
-            label: 'Tarjetas',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_none),
-            selectedIcon: Icon(Icons.notifications),
-            label: 'Avisos',
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Salir'),
           ),
         ],
       ),
     );
+    if (confirmed == true) {
+      // SystemNavigator.pop is the only way to exit on Android without
+      // a router pop. Guarded against re-entry with the dialog context.
+      SystemNavigator.pop();
+    }
   }
 }

@@ -19,6 +19,8 @@ class AppTheme {
     muted: AppColors.muted,
     ink: AppColors.ink,
     accent: AppColors.accent,
+    primary: AppColors.primary,
+    onPrimary: AppColors.onPrimary,
     focus: AppColors.focus,
     danger: AppColors.danger,
   );
@@ -33,6 +35,8 @@ class AppTheme {
     muted: AppColors.mutedDark,
     ink: AppColors.inkDark,
     accent: AppColors.accentDark,
+    primary: AppColors.primaryDark,
+    onPrimary: AppColors.onPrimaryDark,
     focus: AppColors.focusDark,
     danger: AppColors.dangerDark,
   );
@@ -47,12 +51,17 @@ class AppTheme {
     required Color muted,
     required Color ink,
     required Color accent,
+    required Color primary,
+    required Color onPrimary,
     required Color focus,
     required Color danger,
   }) {
     final TextTheme text = AppTypography.textTheme(ink, muted);
     final BorderRadius inputRadius = BorderRadius.circular(
       AppSpacing.radiusInput,
+    );
+    final BorderRadius buttonRadius = BorderRadius.circular(
+      AppSpacing.radiusCard,
     );
 
     return ThemeData(
@@ -63,10 +72,11 @@ class AppTheme {
       focusColor: focus,
       colorScheme: ColorScheme(
         brightness: brightness,
-        // Primary is ink, not accent: the accent stays a highlighter and an
-        // ink-filled button is the only variant that clears 4.5:1 on its label.
-        primary: ink,
-        onPrimary: paper,
+        // Primary is the chromatic button fill (deep teal) — distinct
+        // from ink/paper and from coral. Buttons read as decided and
+        // coloured, not as a black-and-white ink fill.
+        primary: primary,
+        onPrimary: onPrimary,
         secondary: accent,
         onSecondary: paper,
         error: danger,
@@ -96,8 +106,8 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: ink,
-          foregroundColor: paper,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           disabledBackgroundColor: surface2,
           disabledForegroundColor: neutral,
           textStyle: text.labelLarge,
@@ -105,33 +115,34 @@ class AppTheme {
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.sm,
           ),
-          shape: const StadiumBorder(),
+          // radiusCard (12) — not a pill. Matches cards and bottom sheets.
+          shape: RoundedRectangleBorder(borderRadius: buttonRadius),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: ink,
+          foregroundColor: primary,
           disabledForegroundColor: neutral,
           textStyle: text.labelLarge,
-          side: BorderSide(color: neutral),
+          side: BorderSide(color: primary),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.sm,
           ),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(borderRadius: buttonRadius),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: ink,
+          foregroundColor: primary,
           textStyle: text.labelLarge,
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: accent,
-        foregroundColor: paper,
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
         elevation: 1,
-        shape: const StadiumBorder(),
+        shape: RoundedRectangleBorder(borderRadius: buttonRadius),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -151,9 +162,11 @@ class AppTheme {
           borderSide: BorderSide(color: neutral),
         ),
         // Never animated in: a focus ring has to be there the instant focus is.
+        // Focus uses primary (teal), not the coral accent — the focus
+        // identity belongs to the same chromatic family as buttons.
         focusedBorder: OutlineInputBorder(
           borderRadius: inputRadius,
-          borderSide: BorderSide(color: focus, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: inputRadius,
@@ -162,9 +175,13 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surface,
-        selectedColor: surface2,
+        selectedColor: primary.withValues(alpha: 0.15),
+        secondarySelectedColor: primary.withValues(alpha: 0.15),
         side: BorderSide(color: rule),
         labelStyle: text.labelLarge ?? const TextStyle(),
+        secondaryLabelStyle: (text.labelLarge ?? const TextStyle()).copyWith(
+          color: primary,
+        ),
         shape: RoundedRectangleBorder(borderRadius: inputRadius),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -186,8 +203,9 @@ class AppTheme {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: accent,
+        color: primary,
         linearTrackColor: surface2,
+        circularTrackColor: surface2,
       ),
       splashColor: surface2,
       highlightColor: surface2,

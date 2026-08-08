@@ -10,6 +10,8 @@ import '../../widgets/cards/card_tile_skeleton.dart';
 import '../../widgets/cards/card_tile_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/common/theme_toggle_button.dart';
 
 class CardsScreen extends ConsumerWidget {
   const CardsScreen({super.key});
@@ -85,7 +87,10 @@ class CardsScreen extends ConsumerWidget {
     final AsyncValue<List<CardModel>> cards = ref.watch(cardsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tarjetas')),
+      appBar: AppBar(
+        title: const Text('Tarjetas'),
+        actions: const [ThemeToggleButton(), ProfileActionButton()],
+      ),
       floatingActionButton: cards.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(

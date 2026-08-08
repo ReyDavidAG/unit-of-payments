@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 
-/// The eight curated swatches from DESIGN.md and nothing else. A free colour
-/// picker is the fastest way to destroy the palette.
+/// Eight curated swatches from [AppColors.cardSwatches] and nothing else.
+/// A free colour picker is the fastest way to destroy the palette.
 class CardSwatchPickerWidget extends StatelessWidget {
   const CardSwatchPickerWidget({
     required this.selected,

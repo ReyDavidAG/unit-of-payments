@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
+import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/cards/card_model.dart';
 
-/// Alias in title weight, swatch as a small square beside it, last4 in mono.
-/// The swatch never becomes the tile background.
+/// Alias in title weight, brand WebP as a small card thumbnail beside it,
+/// last4 in mono. The WebP carries the brand identity; the surrounding
+/// tile stays neutral.
 class CardTileWidget extends StatelessWidget {
   const CardTileWidget({
     required this.card,
@@ -22,7 +23,6 @@ class CardTileWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Color swatch = AppColors.swatchFromHex(card.color);
 
     return Card(
       child: InkWell(
@@ -32,12 +32,13 @@ class CardTileWidget extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.cardPadding),
           child: Row(
             children: [
-              Container(
-                width: AppSpacing.md,
-                height: AppSpacing.md,
-                decoration: BoxDecoration(
-                  color: swatch,
-                  borderRadius: BorderRadius.circular(AppSpacing.xs2),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSpacing.xs2),
+                child: Image.asset(
+                  CardAssets.webp(card.brand),
+                  width: AppSpacing.xl2,
+                  height: AppSpacing.xl,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Unit of Payments — three stacked payment cards">
+  <title>Unit of Payments — Cascade v2 (cards-as-cards)</title>
+  <g id="card-back">
+    <!-- Nu-evocative deep aubergine. Anchors the stack. -->
+    <rect x="52" y="134" width="320" height="200" rx="18" ry="18" fill="#5B2C6F"/>
+  </g>
+  <g id="card-mid">
+    <!-- BBVA-evocative deep teal-blue. -->
+    <rect x="74" y="156" width="320" height="200" rx="18" ry="18" fill="#1E4D6B"/>
+  </g>
+  <g id="card-front">
+    <!-- Mercado Pago-evocative warm amber. The active one. -->
+    <rect x="96" y="178" width="320" height="200" rx="18" ry="18" fill="#C19A3F"/>
+
+    <!-- Chip: gold-toned, inset 30px from the card's top-left. This is THE
+         recognizable card feature at icon size. Slightly darker than the
+         card body so it reads as a separate element, not a continuation. -->
+    <g id="chip">
+      <rect x="126" y="208" width="48" height="38" rx="5" ry="5" fill="#8B6A2E"/>
+      <!-- Inner cross-hatch hint: 4 thin lines that mimic the contact pads. -->
+      <line x1="126" y1="220" x2="174" y2="220" stroke="#C19A3F" stroke-width="1.2"/>
+      <line x1="126" y1="234" x2="174" y2="234" stroke="#C19A3F" stroke-width="1.2"/>
+      <line x1="150" y1="208" x2="150" y2="246" stroke="#C19A3F" stroke-width="1.2"/>
+    </g>
+
+    <!-- Subtle ink mark on the right edge: marks this card as the next-due. -->
+    <rect x="388" y="208" width="4" height="140" rx="2" ry="2" fill="#1C1411" fill-opacity="0.35"/>
+  </g>
+</svg>

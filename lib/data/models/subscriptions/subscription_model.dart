@@ -1,3 +1,5 @@
+import '../cards/card_model.dart';
+
 /// A recurring charge. Read from `v_subscriptions`, which adds the computed
 /// [nextChargeDate] and [monthlyAmount]; written to the `subscriptions` table.
 class SubscriptionModel {
@@ -14,6 +16,7 @@ class SubscriptionModel {
     this.category,
     this.notes,
     this.cardAlias,
+    this.cardBrand,
     this.cardColor,
     this.nextChargeDate,
     this.monthlyAmount,
@@ -33,6 +36,7 @@ class SubscriptionModel {
         category: json['category'] as String?,
         notes: json['notes'] as String?,
         cardAlias: json['card_alias'] as String?,
+        cardBrand: CardBrand.fromValue(json['card_brand'] as String?),
         cardColor: json['card_color'] as String?,
         nextChargeDate: _toDate(json['next_charge_date']),
         monthlyAmount: json['monthly_amount'] == null
@@ -54,6 +58,7 @@ class SubscriptionModel {
 
   // Joined and computed by the view. Never written back.
   final String? cardAlias;
+  final CardBrand? cardBrand;
   final String? cardColor;
   final DateTime? nextChargeDate;
   final double? monthlyAmount;

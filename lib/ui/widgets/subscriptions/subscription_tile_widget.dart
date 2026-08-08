@@ -4,6 +4,7 @@ import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/helpers/money_helper.dart';
+import '../../../data/models/cards/card_assets.dart';
 import '../../../data/models/subscriptions/subscription_model.dart';
 
 /// Name on the left, amount right-aligned in mono so decimals line up down the
@@ -24,7 +25,7 @@ class SubscriptionTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final int? days = subscription.daysUntilCharge(today);
-    final bool imminent = days != null && days <= 3;
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -36,9 +37,11 @@ class SubscriptionTileWidget extends StatelessWidget {
             children: [
               Container(
                 width: AppSpacing.swatchBar,
-                color: subscription.cardId == null
+                color:
+                    subscription.cardId == null ||
+                        subscription.cardBrand == null
                     ? theme.dividerColor
-                    : AppColors.swatchFromHex(subscription.cardColor),
+                    : CardAssets.accent(subscription.cardBrand!),
               ),
               Expanded(
                 child: Padding(
@@ -64,11 +67,14 @@ class SubscriptionTileWidget extends StatelessWidget {
                                 days ?? 0,
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                // The accent is the attention colour, and this
-                                // is the only thing on the row that wants it.
-                                color: imminent
-                                    ? theme.colorScheme.secondary
-                                    : null,
+                                // Semantic palette: critical when imminent,
+                                // warning when soon, success when there's
+                                // runway, default muted otherwise.
+                                color: _urgencyColor(days ?? 0, isDark),
+                                fontWeight:
+                                    _urgencyColor(days ?? 0, isDark) == null
+                                    ? null
+                                    : FontWeight.w500,
                               ),
                             ),
                         ],
@@ -82,6 +88,16 @@ class SubscriptionTileWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Map days-until-charge to a semantic colour. Null means "no tint"
+  /// — the default muted copy. Critical / warning / success escalate
+  /// with proximity.
+  static Color? _urgencyColor(int days, bool isDark) {
+    if (days <= 3) return isDark ? AppColors.criticalDark : AppColors.critical;
+    if (days <= 6) return isDark ? AppColors.warningDark : AppColors.warning;
+    if (days <= 13) return isDark ? AppColors.successDark : AppColors.success;
+    return null;
   }
 }
 
@@ -97,6 +113,11 @@ class _Details extends StatelessWidget {
       subscription.cycle.label,
       if (subscription.cardAlias != null) subscription.cardAlias!,
     ].join(' · ');
+    // Meta line carries the brand tint at 80% opacity — a hint of the card's
+    // colour without filling the row. Reads as muted when no card is set.
+    final Color? brandTint = subscription.cardBrand == null
+        ? null
+        : CardAssets.accent(subscription.cardBrand!).withValues(alpha: 0.8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +129,10 @@ class _Details extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSpacing.xs3),
-        Text(meta, style: theme.textTheme.bodySmall),
+        Text(
+          meta,
+          style: theme.textTheme.bodySmall?.copyWith(color: brandTint),
+        ),
       ],
     );
   }

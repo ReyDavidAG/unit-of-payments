@@ -10,6 +10,8 @@ import '../../../data/services/supabase/supabase_service.dart';
 import '../../views/subscriptions/subscription_form_view.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/motion/motion.dart';
+import '../../widgets/common/profile_action_button.dart';
+import '../../widgets/common/theme_toggle_button.dart';
 import '../../widgets/subscriptions/subscription_tile_skeleton.dart';
 import '../../widgets/subscriptions/subscription_tile_widget.dart';
 
@@ -79,7 +81,10 @@ class SubscriptionsScreen extends ConsumerWidget {
     final DateTime today = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Suscripciones')),
+      appBar: AppBar(
+        title: const Text('Suscripciones'),
+        actions: const [ThemeToggleButton(), ProfileActionButton()],
+      ),
       floatingActionButton: subscriptions.value?.isEmpty ?? true
           ? null
           : FloatingActionButton(

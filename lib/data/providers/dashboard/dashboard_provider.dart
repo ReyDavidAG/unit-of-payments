@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/cards/card_model.dart';
 import '../../models/cards/card_total_model.dart';
 import '../../models/subscriptions/subscription_model.dart';
 import '../../services/cards/card_service.dart';
@@ -36,6 +37,7 @@ final Provider<CardTotalModel?> uncardedTotalProvider =
       return CardTotalModel(
         alias: 'Sin tarjeta',
         color: '',
+        brand: CardBrand.other,
         subscriptionCount: orphans.length,
         monthlyTotal: orphans.fold(
           0,

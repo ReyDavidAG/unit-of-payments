@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Visa card mark">
+  <title>Visa</title>
+  <!-- Card body: cream paper, not pure white per DESIGN.md. -->
+  <rect width="640" height="400" rx="28" fill="#F5F0E8"/>
+
+  <!-- Subtle wave decoration top-right corner: signature Visa card pattern -->
+  <path d="M 460 0 Q 540 60 640 40 L 640 0 Z" fill="#EDE3DC"/>
+
+  <!-- Chip: gold-toned, upper-left, standard inset. -->
+  <g transform="translate(48, 60)">
+    <rect width="64" height="50" rx="6" fill="#C9A24B"/>
+    <line x1="0" y1="14" x2="64" y2="14" stroke="#F5F0E8" stroke-width="1.5"/>
+    <line x1="0" y1="36" x2="64" y2="36" stroke="#F5F0E8" stroke-width="1.5"/>
+    <line x1="32" y1="0" x2="32" y2="50" stroke="#F5F0E8" stroke-width="1.5"/>
+  </g>
+
+  <!-- VISA wordmark: italic, heavy, navy. Falls back to Helvetica/Arial
+       when rendered — bold italic reads as "Visa card" even without the
+       proprietary typeface. -->
+  <g transform="translate(186, 320)">
+    <text font-family="Helvetica, Arial, sans-serif" font-style="italic" font-weight="900" font-size="120" fill="#1A1F71" letter-spacing="-2">VISA</text>
+  </g>
+</svg>

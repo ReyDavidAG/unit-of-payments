@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="American Express card mark">
+  <title>American Express</title>
+  <!-- Card body: cream paper, the brand's preferred canvas. -->
+  <rect width="640" height="400" rx="28" fill="#F5F0E8"/>
+
+  <!-- Subtle blue accent band at the top: nod to the brand's signature box. -->
+  <rect width="640" height="56" rx="28" fill="#006FCF"/>
+  <rect y="40" width="640" height="16" fill="#006FCF"/>
+
+  <!-- Chip: gold-toned, just below the band. -->
+  <g transform="translate(48, 100)">
+    <rect width="64" height="50" rx="6" fill="#C9A24B"/>
+    <line x1="0" y1="14" x2="64" y2="14" stroke="#F5F0E8" stroke-width="1.5"/>
+    <line x1="0" y1="36" x2="64" y2="36" stroke="#F5F0E8" stroke-width="1.5"/>
+    <line x1="32" y1="0" x2="32" y2="50" stroke="#F5F0E8" stroke-width="1.5"/>
+  </g>
+
+  <!-- AMERICAN EXPRESS wordmark: small caps, condensed, dark navy.
+       This is the most recognizable part of the card; rendered in two
+       stacked rows because the legend doesn't fit on one line at small sizes. -->
+  <g transform="translate(76, 268)">
+    <text font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="44" fill="#006FCF" letter-spacing="2">AMERICAN</text>
+    <text font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="44" fill="#006FCF" letter-spacing="2" y="48">EXPRESS</text>
+  </g>
+</svg>

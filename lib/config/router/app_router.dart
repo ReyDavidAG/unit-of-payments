@@ -8,6 +8,7 @@ import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
 import '../../ui/screens/dashboard/dashboard_screen.dart';
+import '../../ui/screens/error/error_screen.dart';
 import '../../ui/screens/notifications/notification_history_screen.dart';
 import '../../ui/screens/profile/profile_screen.dart';
 import '../../ui/screens/shell/app_shell_screen.dart';
@@ -15,8 +16,16 @@ import '../../ui/screens/subscriptions/subscriptions_screen.dart';
 
 /// Routes and the session guard. The redirect is the only place that decides
 /// whether a screen is reachable.
+///
+/// Tab navigation uses a single `/shell` route (PageView inside). The four
+/// tab paths and names are kept as aliases that redirect to `/shell` so any
+/// `context.goNamed(SubscriptionsScreen.routeName)` call still works without
+/// re-instantiating the shell — the redirect resolves to the same page
+/// the shell was already mounted on.
 class AppRouter {
   const AppRouter._();
+
+  static const String shellPath = '/shell';
 
   static final GoRouter router = GoRouter(
     initialLocation: DashboardScreen.routePath,
@@ -32,55 +41,44 @@ class AppRouter {
         name: SignUpScreen.routeName,
         builder: (context, state) => const SignUpScreen(),
       ),
-      // One navigator per branch, so each tab keeps its own scroll position.
       GoRoute(
         path: ProfileScreen.routePath,
         name: ProfileScreen.routeName,
         builder: (context, state) => const ProfileScreen(),
       ),
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShellScreen(navigationShell: navigationShell),
-        branches: [
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: DashboardScreen.routePath,
-                name: DashboardScreen.routeName,
-                builder: (context, state) => const DashboardScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: SubscriptionsScreen.routePath,
-                name: SubscriptionsScreen.routeName,
-                builder: (context, state) => const SubscriptionsScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: CardsScreen.routePath,
-                name: CardsScreen.routeName,
-                builder: (context, state) => const CardsScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: NotificationHistoryScreen.routePath,
-                name: NotificationHistoryScreen.routeName,
-                builder: (context, state) => const NotificationHistoryScreen(),
-              ),
-            ],
-          ),
-        ],
+      // Single shell route. The body is a PageView with the four tabs
+      // as children. Tab index lives in shellIndexProvider; the PageView
+      // keeps all children mounted.
+      GoRoute(
+        path: shellPath,
+        name: 'shell',
+        builder: (context, state) => const AppShellScreen(),
+      ),
+      // Aliases for the four tab paths: any goNamed to these names
+      // (and any direct navigation to /subscriptions, /cards, /avisos)
+      // lands on /shell without re-instantiating it.
+      GoRoute(
+        path: DashboardScreen.routePath,
+        name: DashboardScreen.routeName,
+        redirect: (context, state) => shellPath,
+      ),
+      GoRoute(
+        path: SubscriptionsScreen.routePath,
+        name: SubscriptionsScreen.routeName,
+        redirect: (context, state) => shellPath,
+      ),
+      GoRoute(
+        path: CardsScreen.routePath,
+        name: CardsScreen.routeName,
+        redirect: (context, state) => shellPath,
+      ),
+      GoRoute(
+        path: NotificationHistoryScreen.routePath,
+        name: NotificationHistoryScreen.routeName,
+        redirect: (context, state) => shellPath,
       ),
     ],
+    errorBuilder: (context, state) => ErrorScreen(error: state.error),
     redirect: (context, state) {
       final bool signedIn = SupabaseService.isSignedIn;
       final bool onAuthScreen =

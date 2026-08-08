@@ -1,7 +1,8 @@
 # DESIGN.md
 
-Locked design system for `unit_of_payments`. Every screen, view and widget reads from these tokens.
-Code rules are in [CLAUDE.md](CLAUDE.md); this file governs how it looks.
+Locked design system for **Vence** (package name `unit_of_payments`). Every screen, view and
+widget reads from these tokens. Code rules are in [CLAUDE.md](CLAUDE.md); this file governs how it
+looks.
 
 ```
 Hallmark · genre: modern-minimal · theme: Coral · scope: system (mobile app)

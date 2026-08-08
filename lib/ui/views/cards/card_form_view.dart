@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/models/cards/card_model.dart';
+import '../../widgets/cards/card_brand_picker_widget.dart';
 import '../../widgets/cards/card_swatch_picker_widget.dart';
 
 /// Create or edit a card alias, in a bottom sheet. Returns the built model,
@@ -30,6 +31,7 @@ class _CardFormViewState extends State<CardFormView> {
   late final TextEditingController _last4;
   late final TextEditingController _cutoff;
   late CardBrand _brand;
+  // Kept so the DB column is still populated, but no UI surfaces it.
   late String _color;
 
   bool get _isEdit => widget.initial != null;
@@ -103,10 +105,19 @@ class _CardFormViewState extends State<CardFormView> {
                 validator: (value) =>
                     (value?.trim().isEmpty ?? true) ? 'Ponle un nombre.' : null,
               ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Marca', style: theme.textTheme.labelLarge),
               const SizedBox(height: AppSpacing.sm),
-              _BrandSelector(
-                value: _brand,
-                onChanged: (brand) => setState(() => _brand = brand),
+              CardBrandPickerWidget(
+                selected: _brand,
+                onSelected: (brand) => setState(() => _brand = brand),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Color', style: theme.textTheme.labelLarge),
+              const SizedBox(height: AppSpacing.sm),
+              CardSwatchPickerWidget(
+                selected: _color,
+                onSelected: (color) => setState(() => _color = color),
               ),
               const SizedBox(height: AppSpacing.lg),
               Row(
@@ -148,13 +159,6 @@ class _CardFormViewState extends State<CardFormView> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              Text('Color', style: theme.textTheme.labelLarge),
-              const SizedBox(height: AppSpacing.sm),
-              CardSwatchPickerWidget(
-                selected: _color,
-                onSelected: (color) => setState(() => _color = color),
-              ),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
@@ -176,27 +180,5 @@ class _CardFormViewState extends State<CardFormView> {
     }
     final int? day = int.tryParse(value);
     return (day != null && day >= 1 && day <= 31) ? null : 'Entre 1 y 31.';
-  }
-}
-
-class _BrandSelector extends StatelessWidget {
-  const _BrandSelector({required this.value, required this.onChanged});
-
-  final CardBrand value;
-  final ValueChanged<CardBrand> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.xs,
-      children: [
-        for (final CardBrand brand in CardBrand.values)
-          ChoiceChip(
-            label: Text(brand.label),
-            selected: brand == value,
-            onSelected: (_) => onChanged(brand),
-          ),
-      ],
-    );
   }
 }
