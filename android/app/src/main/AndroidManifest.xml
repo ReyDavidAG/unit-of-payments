@@ -1,12 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter only declares this in the debug and profile manifests, so a
+         release build has no network at all without it: every request dies as
+         a DNS lookup failure. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Runtime notification permission, required from Android 13. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Reschedules pending reminders after a restart; without it every
          scheduled notification is lost when the phone reboots. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- allowBackup is off because the Supabase session lives in plain
+         SharedPreferences, and Auto Backup would copy that refresh token to
+         Google's servers and restore it onto any other device. -->
     <application
         android:label="Vence"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

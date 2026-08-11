@@ -1,4 +1,4 @@
-package com.davidag.unit_of_payments
+package com.davidag.vence
 
 import io.flutter.embedding.android.FlutterActivity
 

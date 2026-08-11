@@ -6,7 +6,7 @@ suscripciones, meses sin intereses y la deuda que alguien más te está pagando 
 iOS y Android. Sin servidor propio: Supabase guarda los datos, Postgres hace las cuentas y el
 teléfono dispara los avisos por su cuenta, con la app cerrada y sin internet.
 
-`com.davidag.unit_of_payments` · **v1.0.0 build 1** · paquete `unit_of_payments`
+`com.davidag.vence` · **v1.0.0 build 1** · paquete `unit_of_payments`
 
 ---
 
