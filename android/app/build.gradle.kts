@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.davidag.unit_of_payments"
+    namespace = "com.davidag.vence"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.davidag.unit_of_payments"
+        applicationId = "com.davidag.vence"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Both come from `version:` in pubspec.yaml — 1.0.0+1 means
