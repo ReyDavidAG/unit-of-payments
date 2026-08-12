@@ -27,13 +27,6 @@ class AppUpdateNotifier extends Notifier<AppUpdateState> {
     if (playInfo.updateAvailability != UpdateAvailability.updateAvailable) {
       return;
     }
-    if (!playInfo.flexibleUpdateAllowed) {
-      // Without a flexible path the wrapper has nothing to drive. The Edge
-      // Function can force the issue, but we never start an immediate update
-      // out of our own UI — that would hand the screen to Play's dialog and
-      // kill our three-step flow.
-      return;
-    }
 
     final RemoteUpdateConfig? config =
         await AppUpdateService.fetchRemoteConfig();
@@ -46,25 +39,54 @@ class AppUpdateNotifier extends Notifier<AppUpdateState> {
       return;
     }
 
+    // Emit regardless of which paths Play Core allows. The action handler
+    // picks flexible vs immediate at tap time.
     state = state.copyWith(
       status: UpdateStatus.updateAvailable,
       releaseNotes: config?.releaseNotes,
       forceUpdate: force,
+      flexibleAllowed: playInfo.flexibleUpdateAllowed,
+      immediateAllowed: playInfo.immediateUpdateAllowed,
       latestVersion: latestCode?.toString(),
       installedVersion: installed,
     );
   }
 
-  /// Called by the wrapper when the user taps "Actualizar ahora". The actual
-  /// download runs in the background; the wrapper listens to the install
-  /// status stream and removes its panel when the APK is on disk.
-  Future<void> startFlexibleUpdate() async {
-    state = state.copyWith(status: UpdateStatus.downloading);
-    await AppUpdateService.startFlexibleUpdate();
+  /// Starts the update flow when the user taps "Actualizar ahora". Picks
+  /// flexible when available (background download, our three-step flow);
+  /// falls back to immediate when Play Core only allows that path.
+  Future<void> startUpdate() async {
+    if (state.flexibleAllowed) {
+      state = state.copyWith(status: UpdateStatus.downloading);
+      try {
+        await AppUpdateService.startFlexibleUpdate();
+        // Optimistic transition: some OEM skins swallow the `downloaded`
+        // event, in which case the install status stream never fires. If
+        // it does fire later, `markReadyToInstall` is idempotent.
+        state = state.copyWith(status: UpdateStatus.readyToInstall);
+      } on Object catch (_) {
+        // Bounce back so the user can retry instead of being stuck in
+        // `downloading`.
+        state = state.copyWith(
+          status: UpdateStatus.updateAvailable,
+          releaseNotes: 'No se pudo iniciar la descarga. Inténtalo de nuevo.',
+        );
+        rethrow;
+      }
+    } else if (state.immediateAllowed) {
+      try {
+        await AppUpdateService.performImmediateUpdate();
+      } on Object catch (_) {
+        // The OS will have already restarted or shown an error; nothing
+        // useful to do client-side.
+      }
+    }
   }
 
   /// Called by the wrapper when `installStatusStream` reports `downloaded`.
+  /// Idempotent with the optimistic transition in [startUpdate].
   Future<void> markReadyToInstall() async {
+    if (state.status != UpdateStatus.downloading) return;
     state = state.copyWith(status: UpdateStatus.readyToInstall);
   }
 
