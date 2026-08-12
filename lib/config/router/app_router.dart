@@ -7,6 +7,7 @@ import '../../data/services/supabase/supabase_service.dart';
 import '../../ui/screens/auth/sign_in_screen.dart';
 import '../../ui/screens/auth/sign_up_screen.dart';
 import '../../ui/screens/cards/cards_screen.dart';
+import '../../ui/screens/charge_history/charge_history_screen.dart';
 import '../../ui/screens/dashboard/dashboard_screen.dart';
 import '../../ui/screens/error/error_screen.dart';
 import '../../ui/screens/notifications/notification_history_screen.dart';
@@ -45,6 +46,11 @@ class AppRouter {
         path: ProfileScreen.routePath,
         name: ProfileScreen.routeName,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: ChargeHistoryScreen.routePath,
+        name: ChargeHistoryScreen.routeName,
+        builder: (context, state) => const ChargeHistoryScreen(),
       ),
       // Single shell route. The body is a PageView with the four tabs
       // as children. Tab index lives in shellIndexProvider; the PageView
