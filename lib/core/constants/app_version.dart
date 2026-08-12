@@ -1,15 +1,13 @@
-/// The shipped version, shown on the sign-in screen and in Perfil so a tester
-/// can name what they are looking at.
-///
-/// Copied from `version:` in pubspec.yaml rather than read from it: Dart has no
-/// way to read the manifest at runtime, and the package that does exists only
-/// to answer this one question. `app_version_test.dart` reads pubspec.yaml and
-/// fails when the two drift, which is the part that actually needed solving.
+/// The version of the running build, sourced from `package_info_plus` which
+/// reads the version embedded by the Flutter toolchain at build time
+/// (Android `versionName` / `versionCode`, iOS `CFBundleShortVersionString`
+/// / `CFBundleVersion`). Always derived from `version:` in `pubspec.yaml`,
+/// never typed by hand.
 class AppVersion {
-  const AppVersion._();
+  const AppVersion({required this.name, required this.build});
 
-  static const String name = '1.0.0';
-  static const int build = 1;
+  final String name;
+  final int build;
 
-  static const String label = 'v$name build $build';
+  String get label => 'v$name build $build';
 }
