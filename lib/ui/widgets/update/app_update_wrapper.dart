@@ -125,6 +125,11 @@ class _AppUpdateWrapperState extends ConsumerState<AppUpdateWrapper> {
                   .dismissForThisVersion();
             },
       onAction: () async {
+        // Clear the guard synchronously: a fast download can fire
+        // `downloaded` before sheet 1 finishes its dismiss animation, and
+        // the `whenComplete` below would otherwise let the install sheet
+        // be skipped because `_sheetVisible` is still true.
+        _sheetVisible = false;
         Navigator.of(context).pop();
         await ref.read(appUpdateProvider.notifier).startFlexibleUpdate();
       },
