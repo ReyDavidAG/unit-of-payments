@@ -114,6 +114,25 @@ class AppUpdateService {
     }
   }
 
+  /// Starts an immediate (blocking) update on Android. Play Core owns the
+  /// full screen during this flow — the wrapper must not show its own UI.
+  static Future<void> performImmediateUpdate() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await InAppUpdate.performImmediateUpdate();
+    } on PlatformException catch (error) {
+      developer.log(
+        'performImmediateUpdate refused: ${error.message}',
+        name: 'AppUpdateService',
+      );
+    } on MissingPluginException catch (error) {
+      developer.log(
+        'performImmediateUpdate unavailable: $error',
+        name: 'AppUpdateService',
+      );
+    }
+  }
+
   /// The only signal that tells us "downloaded and ready". The wrapper
   /// subscribes here and removes its progress panel on the first download
   /// event.
