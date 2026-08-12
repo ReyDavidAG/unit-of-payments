@@ -32,12 +32,11 @@ class _AppUpdateWrapperState extends ConsumerState<AppUpdateWrapper> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(appUpdateProvider.notifier).checkForUpdate();
-      });
-    }
+    if (!Platform.isAndroid) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(appUpdateProvider.notifier).checkForUpdate();
+    });
   }
 
   @override
