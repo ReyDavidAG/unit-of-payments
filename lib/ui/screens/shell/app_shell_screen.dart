@@ -8,6 +8,7 @@ import '../../../data/providers/shell_index_provider.dart';
 import '../../../data/providers/subscriptions/subscriptions_provider.dart';
 import '../../../data/services/notifications/local_notification_service.dart';
 import '../../widgets/common/colored_nav_bar.dart';
+import '../../widgets/update/app_update_wrapper.dart';
 import '../cards/cards_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../notifications/notification_history_screen.dart';
@@ -87,50 +88,52 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen>
     // authenticated shell asks before quitting the app. The dialog is
     // shown via the shell's own context so it lives above any open
     // sheet on a tab.
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        await _confirmExit(context);
-      },
-      child: Scaffold(
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          physics: const ClampingScrollPhysics(),
-          children: const [
-            DashboardScreen(),
-            SubscriptionsScreen(),
-            CardsScreen(),
-            NotificationHistoryScreen(),
-          ],
-        ),
-        bottomNavigationBar: ColoredNavBar(
-          currentIndex: currentIndex,
-          onTap: _onTabTapped,
-          items: [
-            const NavBarItem(
-              icon: Icons.pie_chart_outline,
-              selectedIcon: Icons.pie_chart,
-              label: 'Resumen',
-            ),
-            NavBarItem(
-              icon: Icons.receipt_long_outlined,
-              selectedIcon: Icons.receipt_long,
-              label: 'Suscripciones',
-              warning: orphaned,
-            ),
-            const NavBarItem(
-              icon: Icons.credit_card_outlined,
-              selectedIcon: Icons.credit_card,
-              label: 'Tarjetas',
-            ),
-            const NavBarItem(
-              icon: Icons.notifications_none,
-              selectedIcon: Icons.notifications,
-              label: 'Avisos',
-            ),
-          ],
+    return AppUpdateWrapper(
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return;
+          await _confirmExit(context);
+        },
+        child: Scaffold(
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            physics: const ClampingScrollPhysics(),
+            children: const [
+              DashboardScreen(),
+              SubscriptionsScreen(),
+              CardsScreen(),
+              NotificationHistoryScreen(),
+            ],
+          ),
+          bottomNavigationBar: ColoredNavBar(
+            currentIndex: currentIndex,
+            onTap: _onTabTapped,
+            items: [
+              const NavBarItem(
+                icon: Icons.pie_chart_outline,
+                selectedIcon: Icons.pie_chart,
+                label: 'Resumen',
+              ),
+              NavBarItem(
+                icon: Icons.receipt_long_outlined,
+                selectedIcon: Icons.receipt_long,
+                label: 'Suscripciones',
+                warning: orphaned,
+              ),
+              const NavBarItem(
+                icon: Icons.credit_card_outlined,
+                selectedIcon: Icons.credit_card,
+                label: 'Tarjetas',
+              ),
+              const NavBarItem(
+                icon: Icons.notifications_none,
+                selectedIcon: Icons.notifications,
+                label: 'Avisos',
+              ),
+            ],
+          ),
         ),
       ),
     );
