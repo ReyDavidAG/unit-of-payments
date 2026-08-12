@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_colors.dart';
 import '../../../config/theme/app_spacing.dart';
@@ -16,6 +17,7 @@ import '../../widgets/common/profile_action_button.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import '../../widgets/subscriptions/subscription_tile_skeleton.dart';
 import '../../widgets/subscriptions/subscription_tile_widget.dart';
+import '../charge_history/charge_history_screen.dart';
 
 class SubscriptionsScreen extends ConsumerWidget {
   const SubscriptionsScreen({super.key});
@@ -128,7 +130,15 @@ class SubscriptionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Suscripciones'),
-        actions: const [ThemeToggleButton(), ProfileActionButton()],
+        actions: [
+          IconButton(
+            tooltip: 'Historial de cobros',
+            icon: const Icon(Icons.history),
+            onPressed: () => context.pushNamed(ChargeHistoryScreen.routeName),
+          ),
+          const ThemeToggleButton(),
+          const ProfileActionButton(),
+        ],
       ),
       floatingActionButton: subscriptions.value?.isEmpty ?? true
           ? null
