@@ -10,6 +10,8 @@ class AppUpdateState {
     this.status = UpdateStatus.idle,
     this.releaseNotes,
     this.forceUpdate = false,
+    this.flexibleAllowed = false,
+    this.immediateAllowed = false,
     this.latestVersion,
     this.installedVersion,
   });
@@ -17,6 +19,13 @@ class AppUpdateState {
   final UpdateStatus status;
   final String? releaseNotes;
   final bool forceUpdate;
+
+  /// What Play Core is willing to do. At least one is true when an update
+  /// is available; both false means we cannot proceed even if `status` is
+  /// `updateAvailable`.
+  final bool flexibleAllowed;
+  final bool immediateAllowed;
+
   final String? latestVersion;
   final String? installedVersion;
 
@@ -24,12 +33,16 @@ class AppUpdateState {
     UpdateStatus? status,
     String? releaseNotes,
     bool? forceUpdate,
+    bool? flexibleAllowed,
+    bool? immediateAllowed,
     String? latestVersion,
     String? installedVersion,
   }) => AppUpdateState(
     status: status ?? this.status,
     releaseNotes: releaseNotes ?? this.releaseNotes,
     forceUpdate: forceUpdate ?? this.forceUpdate,
+    flexibleAllowed: flexibleAllowed ?? this.flexibleAllowed,
+    immediateAllowed: immediateAllowed ?? this.immediateAllowed,
     latestVersion: latestVersion ?? this.latestVersion,
     installedVersion: installedVersion ?? this.installedVersion,
   );
