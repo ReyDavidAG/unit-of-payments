@@ -131,7 +131,7 @@ class _AppUpdateWrapperState extends ConsumerState<AppUpdateWrapper> {
         // be skipped because `_sheetVisible` is still true.
         _sheetVisible = false;
         Navigator.of(context).pop();
-        await ref.read(appUpdateProvider.notifier).startFlexibleUpdate();
+        await ref.read(appUpdateProvider.notifier).startUpdate();
       },
     ).whenComplete(() => _sheetVisible = false);
   }
