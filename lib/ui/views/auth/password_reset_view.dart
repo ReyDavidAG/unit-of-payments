@@ -21,6 +21,8 @@ class PasswordResetView extends StatefulWidget {
 }
 
 class _PasswordResetViewState extends State<PasswordResetView> {
+  static const double _spinnerSize = 16;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _email = TextEditingController(
     text: widget.initialEmail ?? '',
@@ -116,9 +118,17 @@ class _PasswordResetViewState extends State<PasswordResetView> {
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
-                  ? const SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox.square(
+                          dimension: _spinnerSize,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: AppSpacing.sm),
+                        Text('Enviando enlace…'),
+                      ],
                     )
                   : const Text('Enviar enlace'),
             ),
