@@ -10,8 +10,9 @@ import '../../../data/providers/update/app_update_provider.dart';
 import 'update_bottom_sheet.dart';
 import 'update_download_panel.dart';
 
-/// Wraps the authenticated shell and drives the three-step in-app update
-/// flow. Mounted once, in `AppShellScreen.build`. Does nothing on iOS.
+/// Wraps the entire app and drives the three-step in-app update flow.
+/// Mounted once, via `MaterialApp.router(builder: ...)`, so the update check
+/// runs on every cold start regardless of auth state. Does nothing on iOS.
 ///
 /// Step 1 — bottom sheet with "Actualizar ahora" / "Después"
 /// Step 2 — progress panel above the bottom nav
