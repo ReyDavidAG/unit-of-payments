@@ -10,6 +10,14 @@ class Environment {
     'SUPABASE_PUBLISHABLE_KEY',
   );
 
+  /// Feature flag for the in-app update Edge Function. When empty, the update
+  /// flow is disabled (no sheet, no panel). The function itself is named
+  /// `app-version-android`; the URL is included here only so internal builds
+  /// can opt out without rebuilding the Dart code.
+  static const String appVersionFunctionUrl = String.fromEnvironment(
+    'APP_VERSION_FUNCTION_URL',
+  );
+
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
 
