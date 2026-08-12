@@ -10,6 +10,7 @@ import 'config/theme/theme_mode_enum.dart';
 import 'config/theme/app_theme.dart';
 import 'data/providers/theme/theme_provider.dart';
 import 'data/services/supabase/supabase_service.dart';
+import 'ui/widgets/update/app_update_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,12 @@ class MainApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: mode.flutterMode,
       routerConfig: AppRouter.router,
+      // Wrapping every route in [AppUpdateWrapper] makes the in-app update
+      // check run on every cold start, regardless of whether the user is on
+      // sign-in or already authenticated. The wrapper itself is a no-op on
+      // iOS and on Android when no update is available.
+      builder: (BuildContext context, Widget? child) =>
+          AppUpdateWrapper(child: child ?? const SizedBox.shrink()),
       // Without this, Material's own strings (date pickers, text selection
       // menus) render in English no matter what our copy says.
       locale: const Locale('es', 'MX'),
