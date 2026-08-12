@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../data/services/supabase/supabase_service.dart';
+import '../../widgets/auth/password_field_widget.dart';
 
 /// Change the password of the signed-in account.
 class ChangePasswordView extends StatefulWidget {
@@ -18,6 +19,8 @@ class ChangePasswordView extends StatefulWidget {
 }
 
 class _ChangePasswordViewState extends State<ChangePasswordView> {
+  static const double _spinnerSize = 16;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
@@ -78,21 +81,19 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
           children: [
             Text('Cambiar contraseña', style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.lg),
-            TextFormField(
+            PasswordFieldWidget(
               controller: _password,
+              labelText: 'Nueva contraseña',
               enabled: !_loading,
-              obscureText: true,
               autofillHints: const [AutofillHints.newPassword],
-              decoration: const InputDecoration(labelText: 'Nueva contraseña'),
               validator: (value) =>
                   (value ?? '').length < 6 ? 'Mínimo 6 caracteres.' : null,
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextFormField(
+            PasswordFieldWidget(
               controller: _confirm,
+              labelText: 'Repítela',
               enabled: !_loading,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Repítela'),
               // Confirmation exists because the field is obscured: a typo here
               // locks the account out until a reset email.
               validator: (value) =>
@@ -111,9 +112,17 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
-                  ? const SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox.square(
+                          dimension: _spinnerSize,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: AppSpacing.sm),
+                        Text('Guardando…'),
+                      ],
                     )
                   : const Text('Guardar'),
             ),

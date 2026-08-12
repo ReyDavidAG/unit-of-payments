@@ -11,10 +11,10 @@ import '../../widgets/common/version_label_widget.dart';
 import 'sign_up_screen.dart';
 
 /// Sign in. The cascade logo is the hero: three stacked payment cards
-/// fading from deep aubergine to warm amber, with a thin ink mark on
-/// the front card signalling "next charge". It does the brand work so
-/// the typography can stay quiet.
-class SignInScreen extends StatelessWidget {
+/// fading from deep aubergine to warm amber, with a thin ink mark on the
+/// front card signalling "next charge". It does the brand work so the
+/// typography can stay quiet.
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
   static const String routeName = 'sign-in';
@@ -24,6 +24,13 @@ class SignInScreen extends StatelessWidget {
   static const double _logoHeight = 125; // 1.6:1, matches the cascade SVG
 
   @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  bool _busy = false;
+
+  @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
@@ -31,9 +38,6 @@ class SignInScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Theme toggle pinned to the top-right of the safe area.
-            // The form below scrolls independently so the toggle stays
-            // visible while the user types.
             Align(alignment: Alignment.topRight, child: ThemeToggleButton()),
             Expanded(
               child: SingleChildScrollView(
@@ -49,8 +53,8 @@ class SignInScreen extends StatelessWidget {
                       child: Center(
                         child: Image.asset(
                           'lib/assets/icon/splash.png',
-                          width: _logoWidth,
-                          height: _logoHeight,
+                          width: SignInScreen._logoWidth,
+                          height: SignInScreen._logoHeight,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -78,14 +82,12 @@ class SignInScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl2),
-                    // AnimatedListItem wraps the whole form so the email +
-                    // password + CTA reveal together as one logical block —
-                    // email first, password second, submit last is the form's
-                    // own progression.
                     AnimatedListItem(
                       index: 0,
                       child: AuthFormWidget(
-                        submitLabel: 'Iniciar sesión',
+                        mode: AuthMode.signIn,
+                        onLoadingChanged: (busy) =>
+                            setState(() => _busy = busy),
                         onSubmit: (email, password) => SupabaseService.signIn(
                           email: email,
                           password: password,
@@ -99,12 +101,15 @@ class SignInScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           TextButton(
-                            onPressed: () => PasswordResetView.show(context),
+                            onPressed: _busy
+                                ? null
+                                : () => PasswordResetView.show(context),
                             child: const Text('Olvidé mi contraseña'),
                           ),
                           TextButton(
-                            onPressed: () =>
-                                context.goNamed(SignUpScreen.routeName),
+                            onPressed: _busy
+                                ? null
+                                : () => context.goNamed(SignUpScreen.routeName),
                             child: const Text('Crear cuenta'),
                           ),
                         ],
